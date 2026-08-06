@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escala Vagas — Painel Last Mile</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;font-size:12px;color:#1e293b}
+  #header{position:sticky;top:0;z-index:100;background:#FFE600;padding:12px 20px;display:flex;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:2px solid #333;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  #header h1{font-size:15px;color:#333;font-weight:700;margin-right:8px;white-space:nowrap}
+  .btn{padding:7px 14px;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;transition:filter .15s,transform .1s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+  .btn:hover{filter:brightness(.92)}
+  .btn:active{transform:scale(.97)}
+  .b-home{background:#333;color:#FFE600}
+  .b-refresh{background:#0d9488;color:#fff}
+  .b-save{background:#16a34a;color:#fff}
+  .page{padding:18px 20px;display:flex;flex-direction:column;gap:16px;max-width:1200px;margin:0 auto}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:18px 20px}
+  .card-title{font-size:13px;font-weight:700;color:#333;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+  .card-title::before{content:'';display:block;width:4px;height:18px;border-radius:3px;background:#FFE600;flex-shrink:0}
+  .toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+  .fg{display:flex;flex-direction:column;gap:5px}
+  .fg label{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px}
+  .fg select,.fg input{padding:9px 11px;border:1.5px solid #cbd5e1;border-radius:7px;font-size:12px;background:#f8fafc;color:#1e293b;transition:border-color .15s}
+  .fg select:focus,.fg input:focus{outline:none;border-color:#FFE600;box-shadow:0 0 0 3px rgba(255,230,0,.2);background:#fff}
+  .help{font-size:11px;color:#64748b;line-height:1.5;margin-top:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:9px 12px}
+  .help b{color:#333}
+  .stats-row{display:flex;gap:12px;flex-wrap:wrap}
+  .stat{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 20px;min-width:150px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .stat-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:#fffbeb}
+  .stat-v{font-size:22px;font-weight:800;color:#333;line-height:1}
+  .stat-l{font-size:10px;color:#64748b;margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  .table-wrap{overflow:auto;border-radius:8px;border:1px solid #e2e8f0}
+  table{width:100%;border-collapse:collapse;background:#fff;min-width:860px}
+  thead tr{background:#333}
+  thead th{padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:#FFE600;white-space:nowrap;letter-spacing:.3px}
+  tbody td{padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;color:#334155;white-space:nowrap;vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:#f8fafc}
+  tbody tr:hover{background:#fffbeb}
+  .inp,.sel,.time-sel{width:100%;padding:7px 9px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:11px;background:#fff;color:#1e293b;transition:border-color .15s}
+  .inp:focus,.sel:focus,.time-sel:focus{outline:none;border-color:#FFE600;box-shadow:0 0 0 3px rgba(255,230,0,.15)}
+  .inp-readonly{background:#f1f5f9 !important;color:#475569 !important;border-color:#e2e8f0 !important;font-weight:700;cursor:default}
+  .inp-vaga{max-width:70px;text-align:center;font-weight:800;color:#333}
+  .inp-lms{max-width:150px;font-family:monospace;font-size:11px}
+  .sel-colab{min-width:200px}
+  .time-sel{min-width:130px}
+  #loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center}
+  #loading.on{display:flex}
+  .spin{width:46px;height:46px;border:4px solid #ddd;border-top-color:#FFE600;border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #toasts{position:fixed;bottom:18px;right:18px;z-index:9998;display:flex;flex-direction:column;gap:7px}
+  .tst{padding:11px 18px;border-radius:9px;color:#fff;font-size:12px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.28);animation:tin .2s ease;max-width:340px;line-height:1.35}
+  .tst.ok{background:#16a34a}.tst.err{background:#dc2626}.tst.inf{background:#2563eb}
+  @keyframes tin{from{transform:translateX(90px);opacity:0}to{transform:translateX(0);opacity:1}}
+</style>
+</head>
+<body>
+<div id="loading"><div class="spin"></div></div>
+<div id="toasts"></div>
+
+<div id="header">
+  <h1>🅿️ Escala Vagas</h1>
+  <button class="btn b-home"    onclick="voltar()">🏠 Home</button>
+  <button class="btn b-refresh" onclick="carregarTudo()">🔄 Atualizar</button>
+  <button class="btn b-save"    onclick="salvar()">💾 Salvar</button>
+</div>
+
+<div class="page">
+  <div class="card">
+    <div class="card-title">Filtros</div>
+    <div class="toolbar">
+      <div class="fg">
+        <label>Ciclo</label>
+        <select id="sel-ciclo" onchange="trocarCiclo()"><option value="">Carregando...</option></select>
+      </div>
+    </div>
+    <div class="help">Esta escala é salva na <b>planilha mestre AM</b>, filtrada por ciclo.</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat"><div class="stat-icon">🅿️</div><div><div class="stat-v" id="s-total">0</div><div class="stat-l">Vagas</div></div></div>
+    <div class="stat"><div class="stat-icon">👤</div><div><div class="stat-v" id="s-preenchidas">0</div><div class="stat-l">Com colaborador</div></div></div>
+    <div class="stat"><div class="stat-icon">🍽️</div><div><div class="stat-v" id="s-almoco">0</div><div class="stat-l">Com almoço</div></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Alocação por vaga</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:80px">Vaga</th>
+            <th style="width:150px">LMS</th>
+            <th>Colaborador</th>
+            <th style="width:170px">Horário de almoço</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-vagas">
+          <tr><td colspan="4" style="text-align:center;padding:24px;color:#94a3b8">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
+var usuario = null;
+var cicloAtual = '';
+var colaboradores = [];
+var escalaVagas = [];
+var horariosAlmoco = gerarHorariosAlmoco();
+
+try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
+if (!usuario || !usuario.email) { window.location.href='index.html'; }
+
+function api(params){ return fetch(API,{method:'POST',body:JSON.stringify(params)}).then(function(r){return r.json();}); }
+function voltar(){ window.location.href='home.html'; }
+function loading(s){ var el=document.getElementById('loading'); s?el.classList.add('on'):el.classList.remove('on'); }
+function toast(msg,tipo){ var c=document.getElementById('toasts'); var el=document.createElement('div'); el.className='tst '+(tipo||'inf'); el.textContent=msg; c.appendChild(el); setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},5000); }
+function e(v){ if(v===null||v===undefined)return''; return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function gerarHorariosAlmoco(){
+  var lista=[];
+  for(var h=7;h<=15;h++){
+    if(h===15){ lista.push('15:00'); }
+    else{ lista.push((h<10?'0'+h:''+h)+':00'); lista.push((h<10?'0'+h:''+h)+':30'); }
+  }
+  return lista;
+}
+
+function iniciar(){
+  loading(true);
+  api({action:'getCiclos'}).then(function(res){
+    var ciclos=res.data||[];
+    var sel=document.getElementById('sel-ciclo');
+    sel.innerHTML='';
+    ciclos.forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+    cicloAtual=(ciclos&&ciclos.length)?ciclos[0]:'AM';
+    sel.value=cicloAtual;
+    carregarTudo();
+  }).catch(function(er){ loading(false); toast('Erro ao carregar ciclos: '+er.message,'err'); });
+}
+
+function trocarCiclo(){
+  cicloAtual=document.getElementById('sel-ciclo').value||'AM';
+  carregarTudo();
+}
+
+function carregarTudo(){
+  loading(true);
+  Promise.all([
+    api({action:'getColaboradoresLista'}),
+    api({action:'getEscalaVagas', ciclo:cicloAtual})
+  ]).then(function(res){
+    var colabsR=res[0].data||res[0]||[];
+    var escalaR=res[1].data||res[1]||[];
+    colaboradores=Array.isArray(colabsR)?colabsR:[];
+    escalaVagas=Array.isArray(escalaR)?escalaR:[];
+    renderTabela();
+    atualizarStats();
+    loading(false);
+  }).catch(function(er){ loading(false); toast('Erro ao carregar: '+er.message,'err'); });
+}
+
+function atualizarStats(){
+  var total=escalaVagas.length, preenchidas=0, almoco=0;
+  escalaVagas.forEach(function(item){
+    if(String(item.nome||'').trim()) preenchidas++;
+    if(String(item.horario_almoco||'').trim()) almoco++;
+  });
+  document.getElementById('s-total').textContent=total;
+  document.getElementById('s-preenchidas').textContent=preenchidas;
+  document.getElementById('s-almoco').textContent=almoco;
+}
+
+function renderTabela(){
+  var tbody=document.getElementById('tbody-vagas');
+  if(!escalaVagas.length){
+    tbody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:24px;color:#94a3b8">Nenhuma vaga encontrada para este ciclo.</td></tr>';
+    return;
+  }
+  var html='';
+  for(var i=0;i<escalaVagas.length;i++){
+    var item=escalaVagas[i]||{};
+    var listColabId='colab-list-'+i;
+    var listHoraId='hora-list-'+i;
+    html+='<tr>';
+    html+='<td><input class="inp inp-readonly inp-vaga" type="text" value="'+e(item.vaga||'')+'" readonly></td>';
+    html+='<td><input class="inp inp-readonly inp-lms" id="lms-'+i+'" type="text" value="'+e(item.lms||'')+'" readonly></td>';
+    html+='<td>'
+      +'<datalist id="'+listColabId+'">';
+    for(var j=0;j<colaboradores.length;j++){
+      var c=colaboradores[j]||{};
+      html+='<option value="'+e(c.nome||'')+'"></option>';
+    }
+    html+='</datalist>'
+      +'<input class="sel sel-colab" list="'+listColabId+'" id="nome-'+i+'" value="'+e(item.nome||'')+'" placeholder="Digite ou selecione..." oninput="onNomeChange('+i+')" /></td>';
+    html+='<td>'
+      +'<datalist id="'+listHoraId+'">';
+    for(var k=0;k<horariosAlmoco.length;k++){
+      html+='<option value="'+horariosAlmoco[k]+'"></option>';
+    }
+    html+='</datalist>'
+      +'<input class="time-sel" list="'+listHoraId+'" id="almoco-'+i+'" value="'+e(item.horario_almoco||'')+'" placeholder="Selecione..." oninput="onAlmocoChange('+i+')" /></td>';
+    html+='</tr>';
+  }
+  tbody.innerHTML=html;
+}
+
+function onNomeChange(idx){
+  var nome=(document.getElementById('nome-'+idx).value||'').trim();
+  var lms='';
+  for(var i=0;i<colaboradores.length;i++){
+    var c=colaboradores[i]||{};
+    if(String(c.nome||'').trim().toLowerCase()===nome.toLowerCase()){ lms=c.lms||''; nome=c.nome||nome; break; }
+  }
+  escalaVagas[idx].nome=nome;
+  escalaVagas[idx].lms=lms;
+  document.getElementById('lms-'+idx).value=lms;
+  document.getElementById('nome-'+idx).value=nome;
+  atualizarStats();
+}
+
+function onAlmocoChange(idx){
+  var horario=(document.getElementById('almoco-'+idx).value||'').trim();
+  if(horario&&horariosAlmoco.indexOf(horario)===-1){ toast('Selecione um horário válido entre 07:00 e 15:00.','inf'); return; }
+  escalaVagas[idx].horario_almoco=horario;
+  document.getElementById('almoco-'+idx).value=horario;
+  atualizarStats();
+}
+
+function salvar(){
+  loading(true);
+  api({action:'salvarEscalaVagas', ciclo:cicloAtual, linhas:escalaVagas}).then(function(r){
+    loading(false);
+    if(r&&r.ok){ toast(r.msg||'Escala de vagas salva.','ok'); carregarTudo(); }
+    else{ toast((r&&r.msg)||'Erro ao salvar.','err'); }
+  }).catch(function(er){ loading(false); toast('Erro: '+er.message,'err'); });
+}
+
+window.addEventListener('load', iniciar);
+</script>
+</body>
+</html>

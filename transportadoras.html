@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transportadoras — Painel Last Mile</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',sans-serif;background:#f8f9fa;font-size:12px;color:#333}
+    header{background:#FFE600;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+    header h1{font-size:15px;font-weight:800;color:#333}
+    .header-right{display:flex;gap:8px;align-items:center}
+    .btn{padding:7px 14px;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;transition:filter .15s;white-space:nowrap}
+    .btn:hover{filter:brightness(.92)}
+    .btn-home{background:#333;color:#FFE600}
+    .btn-salvar{background:#16a34a;color:#fff}
+    .btn-csv{background:#1d4ed8;color:#fff}
+    .toolbar{padding:10px 16px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .toolbar select,.toolbar input{padding:6px 10px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:12px}
+    .wrapper{padding:16px;overflow-x:auto}
+    table{width:100%;border-collapse:collapse;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06);border-radius:10px;overflow:hidden;min-width:900px}
+    thead th{background:#333;color:#FFE600;padding:10px 12px;font-size:11px;font-weight:700;text-align:left;white-space:nowrap}
+    tbody td{padding:8px 12px;border-bottom:1px solid #f1f5f9;font-size:11px;white-space:nowrap}
+    tbody tr:hover{background:#fffbeb}
+    tbody tr:last-child td{border-bottom:none}
+    .inp-edit{padding:4px 8px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:11px;background:#fff;width:130px}
+    .inp-edit:focus{outline:none;border-color:#FFE600}
+    .msg{padding:8px 14px;border-radius:6px;margin:6px 16px;font-size:12px;display:none}
+    .msg.ok{background:#dcfce7;color:#166534;display:block}
+    .msg.err{background:#fee2e2;color:#991b1b;display:block}
+    #loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
+    #loading.on{display:flex}
+    .spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,.3);border-top-color:#FFE600;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;padding:16px}
+    .modal-bg.show{display:flex}
+    .modal{background:#fff;border-radius:12px;padding:24px;width:100%;max-width:440px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+    .modal h3{font-size:14px;font-weight:700;margin-bottom:16px;color:#333}
+    .field{margin-bottom:12px}
+    .field label{display:block;font-size:11px;font-weight:700;color:#555;margin-bottom:4px;text-transform:uppercase}
+    .field input,.field select{width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:12px}
+    .field input:focus,.field select:focus{outline:none;border-color:#FFE600}
+    .modal-btns{display:flex;gap:8px;margin-top:16px}
+    .modal-btns button{flex:1;padding:10px;border-radius:7px;border:none;cursor:pointer;font-weight:700;font-size:12px}
+    .btn-confirm{background:#FFE600;color:#333}
+    .btn-cancel{background:#eee;color:#555}
+  </style>
+</head>
+<body>
+<div id="loading"><div class="spinner"></div></div>
+<div id="msgGlobal" class="msg"></div>
+
+<header>
+  <h1>🚛 Transportadoras</h1>
+  <div class="header-right">
+    <button class="btn btn-csv" onclick="baixarCSV()">⬇️ Baixar CSV</button>
+    <button class="btn btn-salvar" onclick="salvar()">💾 Salvar</button>
+    <button class="btn" style="background:#7c3aed;color:#fff" onclick="abrirModalVeiculo()">🚗 Cadastrar Veículo</button>
+    <button class="btn" style="background:#0f766e;color:#fff" onclick="abrirModalMotorista()">👤 Cadastrar Motorista</button>
+    <button class="btn btn-home" onclick="voltar()">🏠 Home</button>
+  </div>
+</header>
+
+<div class="toolbar">
+  <select id="selCiclo" onchange="trocarCiclo()"><option value="">Carregando...</option></select>
+  <input type="text" id="filtroRota" placeholder="🔍 Buscar rota..." oninput="renderTabela()">
+</div>
+
+<div class="wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Planejada</th><th>Otimizada</th><th>Pacotes</th><th>Paradas</th>
+        <th>Modal</th><th>Ocup/Vol</th><th>Bairro</th><th>Cidade</th>
+        <th>Giro</th><th>Vaga</th><th>Roteiro</th><th>Transportadora</th>
+        <th>Placa</th><th>Driver</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"><tr><td colspan="14" style="text-align:center;padding:24px;color:#aaa">Carregando...</td></tr></tbody>
+  </table>
+</div>
+
+<!-- Modal Veículo -->
+<div class="modal-bg" id="modalVeiculo">
+  <div class="modal">
+    <h3>🚗 Cadastrar Veículo</h3>
+    <div class="field"><label>Placa</label><input type="text" id="v-placa" placeholder="ABC-1234"></div>
+    <div class="field"><label>Tipo</label><input type="text" id="v-tipo" placeholder="Van, VUC, Caminhão..."></div>
+    <div class="field"><label>Transportadora</label>
+      <select id="v-transp"><option value="">Selecionar...</option></select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-confirm" onclick="salvarVeiculo()">✅ Salvar</button>
+      <button class="btn-cancel" onclick="fecharModal('modalVeiculo')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Motorista -->
+<div class="modal-bg" id="modalMotorista">
+  <div class="modal">
+    <h3>👤 Cadastrar Motorista</h3>
+    <div class="field"><label>Nome</label><input type="text" id="m-nome" placeholder="Nome completo"></div>
+    <div class="field"><label>CPF</label><input type="text" id="m-cpf" placeholder="000.000.000-00"></div>
+    <div class="field"><label>Transportadora</label>
+      <select id="m-transp"><option value="">Selecionar...</option></select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-confirm" onclick="salvarMotorista()">✅ Salvar</button>
+      <button class="btn-cancel" onclick="fecharModal('modalMotorista')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
+  var usuario = null;
+  var cicloAtual = 'AM';
+  var dadosEscala = [];
+  var transportadoras = [];
+
+  try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
+  if (!usuario || !usuario.email) { window.location.href='index.html'; }
+
+  var isTransp = usuario && usuario.grupo === 'Transportadora';
+
+  function voltar(){ window.location.href='home.html'; }
+  function loading(s){ document.getElementById('loading').className=s?'on':''; }
+  function mostrarMsg(msg,ok){
+    var el=document.getElementById('msgGlobal');
+    el.textContent=msg; el.className='msg '+(ok?'ok':'err');
+    setTimeout(function(){ el.className='msg'; },4000);
+  }
+  function api(params){ return fetch(API,{method:'POST',body:JSON.stringify(params)}).then(function(r){return r.json();}); }
+
+  function iniciar(){
+    loading(true);
+    Promise.all([
+      api({action:'getCiclos'}),
+      api({action:'listarTransportadoras'})
+    ]).then(function(res){
+      var ciclos = res[0].data||[];
+      transportadoras = res[1].data||[];
+      var sel = document.getElementById('selCiclo');
+      sel.innerHTML='';
+      ciclos.forEach(function(c){
+        var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);
+      });
+      cicloAtual = ciclos[0]||'AM';
+      preencherSelTransp();
+      carregarEscala();
+    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
+  }
+
+  function preencherSelTransp(){
+    ['v-transp','m-transp'].forEach(function(id){
+      var sel=document.getElementById(id);
+      sel.innerHTML='<option value="">Selecionar...</option>';
+      transportadoras.forEach(function(t){
+        var o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);
+      });
+    });
+  }
+
+  function trocarCiclo(){
+    cicloAtual=document.getElementById('selCiclo').value;
+    carregarEscala();
+  }
+
+  function carregarEscala(){
+    loading(true);
+    api({action:'getEscalaTransportadora', ciclo:cicloAtual}).then(function(res){
+      dadosEscala = res.data||res||[];
+      renderTabela();
+      loading(false);
+    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
+  }
+
+  function renderTabela(){
+    var fRota = document.getElementById('filtroRota').value.toLowerCase();
+    var filtrado = dadosEscala.filter(function(d){
+      if(isTransp && d.transportadora !== usuario.transportadora) return false;
+      if(fRota && String(d.rota||'').toLowerCase().indexOf(fRota)===-1 &&
+         String(d.otimizada||'').toLowerCase().indexOf(fRota)===-1) return false;
+      return true;
+    });
+    var html='';
+    filtrado.forEach(function(d){
+      var podeEditar = !isTransp || d.transportadora === usuario.transportadora;
+      html+='<tr>'
+        +'<td>'+e(d.rota)+'</td>'
+        +'<td>'+e(d.otimizada)+'</td>'
+        +'<td>'+e(d.pacotes)+'</td>'
+        +'<td>'+e(d.parada)+'</td>'
+        +'<td>'+e(d.tipo_veiculo)+'</td>'
+        +'<td>'+e(d.ocup_volumosos)+'</td>'
+        +'<td>'+e(d.bairro)+'</td>'
+        +'<td>'+e(d.cidade)+'</td>'
+        +'<td>'+e(d.giro)+'</td>'
+        +'<td>'+e(d.doca)+'</td>'
+        +'<td>'+e(d.roteiro)+'</td>'
+        +'<td>'+e(d.transportadora)+'</td>'
+        +'<td>'+(podeEditar?'<input class="inp-edit" data-rota="'+e(d.rota)+'" data-field="Placa" value="'+e(d.placa||'')+'" placeholder="Placa">':e(d.placa||'-'))+'</td>'
+        +'<td>'+(podeEditar?'<input class="inp-edit" data-rota="'+e(d.rota)+'" data-field="Driver" value="'+e(d.driver||'')+'" placeholder="Motorista">':e(d.driver||'-'))+'</td>'
+      +'</tr>';
+    });
+    document.getElementById('tbody').innerHTML = html||'<tr><td colspan="14" style="text-align:center;padding:24px;color:#aaa">Nenhuma rota encontrada.</td></tr>';
+  }
+
+  function salvar(){
+    loading(true);
+    var linhas = [['Rota','Placa','Driver']];
+    document.querySelectorAll('.inp-edit[data-field="Placa"]').forEach(function(inp){
+      var rota = inp.dataset.rota;
+      var placa = inp.value.trim();
+      var driver = '';
+      var driverInp = document.querySelector('.inp-edit[data-rota="'+rota+'"][data-field="Driver"]');
+      if(driverInp) driver = driverInp.value.trim();
+      linhas.push([rota, placa, driver]);
+    });
+    api({action:'salvarEscalaSalva', ciclo:cicloAtual, linhas:linhas}).then(function(res){
+      loading(false);
+      mostrarMsg(res.ok?'✅ Salvo com sucesso!':'❌ Erro ao salvar.',res.ok);
+    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
+  }
+
+  function baixarCSV(){
+    var rows = [['Rota otimizada','Rota original','Giro','Vaga','Tipo de veículo','Transportadora','Placa','Driver']];
+    dadosEscala.forEach(function(d){
+      if(isTransp && d.transportadora !== usuario.transportadora) return;
+      rows.push([d.otimizada||'',d.rota||'',d.giro||'',d.doca||'',d.tipo_veiculo||'',d.transportadora||'',d.placa||'',d.driver||'']);
+    });
+    var csv = rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+    var blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'transportadoras_'+cicloAtual+'.csv';
+    a.click();
+  }
+
+  function abrirModalVeiculo(){ document.getElementById('modalVeiculo').className='modal-bg show'; }
+  function abrirModalMotorista(){ document.getElementById('modalMotorista').className='modal-bg show'; }
+  function fecharModal(id){ document.getElementById(id).className='modal-bg'; }
+
+  function salvarVeiculo(){
+    var placa=document.getElementById('v-placa').value.trim();
+    var tipo=document.getElementById('v-tipo').value.trim();
+    var transp=document.getElementById('v-transp').value.trim();
+    if(!placa||!transp){mostrarMsg('⚠️ Preencha placa e transportadora.',false);return;}
+    loading(true);
+    api({action:'cadastrarVeiculo',placa:placa,tipo:tipo,transportadora:transp}).then(function(res){
+      loading(false);fecharModal('modalVeiculo');
+      mostrarMsg(res.ok?'✅ Veículo cadastrado!':'❌ Erro.',res.ok);
+    }).catch(function(e){loading(false);mostrarMsg('Erro: '+e.message,false);});
+  }
+
+  function salvarMotorista(){
+    var nome=document.getElementById('m-nome').value.trim();
+    var cpf=document.getElementById('m-cpf').value.trim();
+    var transp=document.getElementById('m-transp').value.trim();
+    if(!nome||!transp){mostrarMsg('⚠️ Preencha nome e transportadora.',false);return;}
+    loading(true);
+    api({action:'cadastrarMotorista',nome:nome,cpf:cpf,transportadora:transp}).then(function(res){
+      loading(false);fecharModal('modalMotorista');
+      mostrarMsg(res.ok?'✅ Motorista cadastrado!':'❌ Erro.',res.ok);
+    }).catch(function(e){loading(false);mostrarMsg('Erro: '+e.message,false);});
+  }
+
+  function e(v){
+    if(v===null||v===undefined)return'';
+    return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  iniciar();
+</script>
+</body>
+</html>

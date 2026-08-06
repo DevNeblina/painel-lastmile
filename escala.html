@@ -1,255 +1,459 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Escala — Painel Last Mile</title>
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',sans-serif;background:#f8f9fa;font-size:12px;color:#333}
-    header{background:#FFE600;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-    header h1{font-size:15px;font-weight:800;color:#333}
-    .header-right{display:flex;gap:8px;align-items:center}
-    .btn{padding:7px 14px;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;transition:filter .15s;white-space:nowrap}
-    .btn:hover{filter:brightness(.92)}
-    .btn-home{background:#333;color:#FFE600}
-    .btn-salvar{background:#16a34a;color:#fff}
-    .btn-limpar{background:#dc2626;color:#fff}
-    .btn-xlsx{background:#1d4ed8;color:#fff}
-    .toolbar{padding:10px 16px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .toolbar select,.toolbar input{padding:6px 10px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:12px}
-    .wrapper{padding:16px;overflow-x:auto}
-    table{width:100%;border-collapse:collapse;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06);border-radius:10px;overflow:hidden;min-width:900px}
-    thead th{background:#333;color:#FFE600;padding:10px 12px;font-size:11px;font-weight:700;text-align:left;white-space:nowrap}
-    tbody td{padding:8px 12px;border-bottom:1px solid #f1f5f9;font-size:11px;white-space:nowrap}
-    tbody tr:hover{background:#fffbeb}
-    tbody tr:last-child td{border-bottom:none}
-    select.transp-sel{padding:4px 8px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:11px;background:#fff;min-width:140px}
-    select.transp-sel:focus{outline:none;border-color:#FFE600}
-    .badge{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
-    .msg{padding:8px 14px;border-radius:6px;margin:6px 16px;font-size:12px;display:none}
-    .msg.ok{background:#dcfce7;color:#166534;display:block}
-    .msg.err{background:#fee2e2;color:#991b1b;display:block}
-    #loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
-    #loading.on{display:flex}
-    .spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,.3);border-top-color:#FFE600;border-radius:50%;animation:spin .8s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;padding:16px}
-    .modal-bg.show{display:flex}
-    .modal{background:#fff;border-radius:12px;padding:24px;width:100%;max-width:700px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)}
-    .modal h3{font-size:14px;font-weight:700;margin-bottom:16px;color:#333}
-    .modal table{min-width:unset}
-    .close-modal{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:#888}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escala — Painel Last Mile</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:12px}
+  #header{position:sticky;top:0;z-index:100;background:#FFE600;padding:10px 14px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;border-bottom:2px solid #333;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  #header h1{font-size:14px;color:#333;font-weight:700;margin-right:6px;white-space:nowrap}
+  .btn{padding:6px 11px;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;transition:opacity .15s;white-space:nowrap}
+  .btn:hover{opacity:.85}
+  .b-home{background:#333;color:#FFE600}
+  .b-save{background:#16a34a;color:#fff}
+  .b-clear{background:#b45309;color:#fff}
+  .b-mlp{background:#7c3aed;color:#fff}
+  .b-filtros{background:#0f766e;color:#fff}
+  .b-xlsx{background:#0369a1;color:#fff}
+  .b-csv{background:#065f46;color:#fff}
+  .b-lote{background:#1d4ed8;color:#fff}
+  .b-detail{background:#7c3aed;color:#fff;padding:3px 7px;font-size:10px}
+  .b-del{background:#dc2626;color:#fff;padding:3px 7px;font-size:10px}
+  .b-cancel{background:#6b7280;color:#fff}
+  #filtros-panel{display:none;background:#fff;padding:12px 14px;border-bottom:1px solid #dde;flex-wrap:wrap;gap:8px;align-items:flex-end}
+  #filtros-panel.aberto{display:flex}
+  .fg{display:flex;flex-direction:column;gap:3px}
+  .fg label{font-size:10px;font-weight:700;color:#555;text-transform:uppercase}
+  .fg input,.fg select{padding:5px 7px;border:1.5px solid #ddd;border-radius:5px;font-size:11px;min-width:120px}
+  .fg input:focus,.fg select:focus{outline:none;border-color:#FFE600}
+  .fcheck{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#333;padding-bottom:2px}
+  #barra-lote{background:#fffbf0;border-bottom:1px solid #f0d080;padding:7px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  #barra-lote label{font-size:11px;font-weight:700;color:#7a6000}
+  #barra-lote select{padding:5px 7px;border:1.5px solid #ddd;border-radius:5px;font-size:11px;min-width:190px}
+  #stats{display:flex;gap:8px;flex-wrap:wrap;padding:8px 14px;background:#fff;border-bottom:1px solid #eee;align-items:center}
+  .stat{background:#f8f9fb;border:1px solid #e2e8f0;border-radius:7px;padding:6px 12px;text-align:center;min-width:90px}
+  .stat-v{font-size:1.2rem;font-weight:700;color:#333}
+  .stat-l{font-size:10px;color:#64748b;margin-top:1px}
+  .stat-divider{width:1px;background:#e2e8f0;align-self:stretch;margin:0 4px}
+  #tabela-wrap{overflow-x:auto;padding:10px 14px 60px}
+  table{width:100%;border-collapse:collapse;background:#fff;min-width:1200px;border-radius:8px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08)}
+  thead th{background:#333;color:#FFE600;padding:8px 7px;text-align:left;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;user-select:none}
+  thead th:hover{background:#111}
+  tbody tr:nth-child(even){background:#f8f9fb}
+  tbody tr:hover{background:#fffbeb !important}
+  tbody tr.sem-tr{background:#fff7ed !important}
+  tbody tr.sem-tr:hover{background:#fff0d6 !important}
+  tbody td{padding:6px 7px;border-bottom:1px solid #f0f0f0;font-size:11px;white-space:nowrap}
+  input.sel-t{width:100%;min-width:170px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;font-size:11px}
+  input.sel-t:focus{outline:none;border-color:#FFE600}
+  #loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
+  #loading.on{display:flex}
+  .spin{width:44px;height:44px;border:4px solid #ddd;border-top-color:#FFE600;border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #toasts{position:fixed;bottom:16px;right:16px;z-index:9998;display:flex;flex-direction:column;gap:6px}
+  .tst{padding:9px 16px;border-radius:7px;color:#fff;font-size:12px;font-weight:600;box-shadow:0 3px 10px rgba(0,0,0,.3);animation:tin .2s ease;max-width:320px;line-height:1.35}
+  .tst.ok{background:#16a34a}.tst.err{background:#dc2626}.tst.inf{background:#0369a1}
+  @keyframes tin{from{transform:translateX(80px);opacity:0}to{transform:translateX(0);opacity:1}}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:center;justify-content:center;padding:16px}
+  .modal-bg.on{display:flex}
+  .modal{background:#fff;border-radius:12px;padding:22px;max-width:960px;width:100%;max-height:85vh;display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+  .modal h3{font-size:14px;color:#333;font-weight:700}
+  .modal-scroll{overflow-y:auto;flex:1}
+  .modal-footer{display:flex;justify-content:flex-end;gap:8px}
+  .modal-table{width:100%;border-collapse:collapse;font-size:11px}
+  .modal-table th{background:#333;color:#FFE600;padding:7px;text-align:left;font-weight:700;white-space:nowrap}
+  .modal-table td{padding:5px 7px;border-bottom:1px solid #f0f0f0;white-space:nowrap}
+  .modal-table tr:hover td{background:#fffbeb}
+  .modal label{font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:3px}
+  .modal input{width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:13px;margin-bottom:10px}
+  .modal input:focus{outline:none;border-color:#FFE600}
+</style>
 </head>
-<body>
-<div id="loading"><div class="spinner"></div></div>
-<div id="msgGlobal" class="msg"></div>
 
-<header>
-  <h1>📊 Escala de Carregamento</h1>
-  <div class="header-right">
-    <button class="btn btn-xlsx" onclick="baixarXlsx()">⬇️ Baixar XLSX</button>
-    <button class="btn btn-salvar" onclick="salvar()">💾 Salvar</button>
-    <button class="btn btn-limpar" onclick="limpar()">🗑️ Limpar</button>
-    <button class="btn btn-home" onclick="voltar()">🏠 Home</button>
-  </div>
-</header>
+  <body>
+<div id="loading"><div class="spin"></div></div>
+<div id="toasts"></div>
 
-<div class="toolbar">
-  <select id="selCiclo" onchange="trocarCiclo()"><option value="">Carregando...</option></select>
-  <select id="filtroArea" onchange="renderTabela()"><option value="">Todas as Áreas</option></select>
-  <input type="text" id="filtroRota" placeholder="🔍 Buscar rota..." oninput="renderTabela()">
+<div id="header">
+  <h1>📦 Escala</h1>
+  <button class="btn b-home"    onclick="voltar()">🏠 Home</button>
+  <button class="btn b-save"    onclick="salvarEscala()">💾 Salvar</button>
+  <button class="btn b-clear"   onclick="limparEscala()">🗑️ Limpar</button>
+  <button class="btn b-mlp"     onclick="abrirMLP()">➕ MLP</button>
+  <button class="btn b-filtros" onclick="toggleFiltros()">🔍 Filtros</button>
+  <button class="btn b-xlsx"    onclick="baixarXlsx()">⬇️ Escala (XLSX)</button>
+  <button class="btn b-csv"     onclick="baixarCSV()">⬇️ Transp. (CSV)</button>
 </div>
 
-<div class="wrapper">
-  <table id="tabela">
+<div id="filtros-panel">
+  <div class="fg"><label>Ciclo</label><select id="f-ciclo" onchange="trocarCiclo()"><option value="">— selecione —</option></select></div>
+  <div class="fg"><label>Rota</label><input id="f-rota" oninput="aplicarFiltros()" placeholder="Buscar..."></div>
+  <div class="fg"><label>Otimizada</label><input id="f-otim" oninput="aplicarFiltros()" placeholder="Buscar..."></div>
+  <div class="fg"><label>Cidade</label><input id="f-cidade" oninput="aplicarFiltros()" placeholder="Buscar..."></div>
+  <div class="fg"><label>Tipo Veículo</label><input id="f-tipo" oninput="aplicarFiltros()" placeholder="Buscar..."></div>
+  <div class="fg"><label>Projeto</label><input id="f-proj" oninput="aplicarFiltros()" placeholder="Buscar..."></div>
+  <div class="fg"><label>Transportadora</label><select id="f-transp" onchange="aplicarFiltros()"><option value="">Todas</option></select></div>
+  <div class="fg"><label>Giro</label><select id="f-giro" onchange="aplicarFiltros()"><option value="">Todos</option></select></div>
+  <div class="fg"><label>Área</label><select id="f-area" onchange="aplicarFiltros()"><option value="">Todas</option></select></div>
+  <div class="fg" style="justify-content:flex-end">
+    <label class="fcheck"><input type="checkbox" id="f-sem" onchange="aplicarFiltros()"> Sem transportadora</label>
+  </div>
+  <div class="fg"><button class="btn b-cancel" onclick="limparFiltros()" style="margin-top:17px">Limpar</button></div>
+</div>
+
+<div id="barra-lote">
+  <label>🔄 Lote:</label>
+  <select id="lote-sel"><option value="">— selecione transportadora —</option></select>
+  <button class="btn b-lote" onclick="aplicarLote()">Aplicar nas filtradas</button>
+</div>
+
+<div id="stats">
+  <div class="stat"><div class="stat-v" id="s-total">0</div><div class="stat-l">Total</div></div>
+  <div class="stat"><div class="stat-v" id="s-filt">0</div><div class="stat-l">Filtradas</div></div>
+  <div class="stat"><div class="stat-v" id="s-com">0</div><div class="stat-l">Com transp.</div></div>
+  <div class="stat"><div class="stat-v" id="s-sem">0</div><div class="stat-l">Sem transp.</div></div>
+  <div class="stat"><div class="stat-v" id="s-pac">0</div><div class="stat-l">Pacotes</div></div>
+  <div class="stat-divider"></div>
+  <div id="s-transp-wrap" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"></div>
+</div>
+
+<div id="tabela-wrap">
+  <table>
     <thead>
       <tr>
-        <th>Rota</th><th>Otimizada</th><th>Paradas</th><th>Pacotes</th>
-        <th>Cidade</th><th>Bairro</th><th>Modal</th><th>Ocup/Vol</th>
-        <th>Giro</th><th>Área</th><th>Doca</th><th>Roteiro</th>
+        <th onclick="sortBy('otimizada')">Otimizada ↕</th>
+        <th onclick="sortBy('rota')">Rota ↕</th>
+        <th onclick="sortBy('parada')">Paradas ↕</th>
+        <th onclick="sortBy('pacotes')">Pacotes ↕</th>
+        <th onclick="sortBy('cidade')">Cidade ↕</th>
+        <th onclick="sortBy('bairro')">Bairro ↕</th>
+        <th onclick="sortBy('tipo_veiculo')">Tipo Veículo ↕</th>
+        <th onclick="sortBy('ocup_volumosos')">% Ocup ↕</th>
+        <th onclick="sortBy('projeto')">Projeto ↕</th>
         <th>Transportadora</th>
+        <th onclick="sortBy('giro')">Giro ↕</th>
+        <th onclick="sortBy('area')">Área ↕</th>
+        <th onclick="sortBy('doca')">Doca ↕</th>
+        <th onclick="sortBy('roteiro')">Roteiro ↕</th>
+        <th>Ações</th>
       </tr>
     </thead>
-    <tbody id="tbody"><tr><td colspan="13" style="text-align:center;padding:24px;color:#aaa">Carregando...</td></tr></tbody>
+    <tbody id="tbody"></tbody>
   </table>
 </div>
 
-<div class="modal-bg" id="modalDetalhe">
+<div class="modal-bg" id="m-detalhe" onclick="fecharFora(event,'m-detalhe')">
   <div class="modal">
-    <button class="close-modal" onclick="fecharModal()">×</button>
-    <h3 id="modalTitulo">📦 Pacotes da Rota</h3>
-    <div id="modalConteudo"></div>
+    <h3 id="m-detalhe-titulo">📦 Detalhe da Rota</h3>
+    <div class="modal-scroll">
+      <table class="modal-table">
+        <thead><tr>
+          <th>Rota</th><th>Parada</th><th>Shipment ID</th>
+          <th>Cidade</th><th>Bairro</th><th>CEP</th>
+          <th>Merchant Type</th><th>Promessa Início</th><th>Promessa Fim</th>
+        </tr></thead>
+        <tbody id="tbody-detalhe"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn b-cancel" onclick="fechar('m-detalhe')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-mlp" onclick="fecharFora(event,'m-mlp')">
+  <div class="modal" style="max-width:380px">
+    <h3>➕ Cadastrar MLP</h3>
+    <label>Nome</label>
+    <input id="mlp-nome" type="text" placeholder="Nome da transportadora...">
+    <div class="modal-footer">
+      <button class="btn b-cancel" onclick="fechar('m-mlp')">Cancelar</button>
+      <button class="btn b-save"   onclick="salvarMLP()">💾 Salvar</button>
+    </div>
   </div>
 </div>
 
 <script>
-  var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
-  var usuario = null;
-  var cicloAtual = 'AM';
-  var dadosEscala = [];
-  var transportadoras = [];
+var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
+var usuario = null;
+try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
+if (!usuario || !usuario.email) { window.location.href='index.html'; }
 
-  try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
-  if (!usuario || !usuario.email) { window.location.href='index.html'; }
+var brutos=[], filtrados=[], transps=[], sCampo='', sAsc=true, cicloAtual='';
 
-  function voltar(){ window.location.href='home.html'; }
-  function loading(s){ document.getElementById('loading').className=s?'on':''; }
-  function mostrarMsg(msg,ok){
-    var el=document.getElementById('msgGlobal');
-    el.textContent=msg; el.className='msg '+(ok?'ok':'err');
-    setTimeout(function(){ el.className='msg'; },4000);
+function api(params){ return fetch(API,{method:'POST',body:JSON.stringify(params)}).then(function(r){return r.json();}); }
+function voltar(){ window.location.href='home.html'; }
+function loading(s){ var el=document.getElementById('loading'); s?el.classList.add('on'):el.classList.remove('on'); }
+function toast(msg,tipo){ var c=document.getElementById('toasts'); var el=document.createElement('div'); el.className='tst '+(tipo||'inf'); el.textContent=msg; c.appendChild(el); setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},5000); }
+function e(v){ if(v===null||v===undefined)return''; return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fechar(id){ document.getElementById(id).classList.remove('on'); }
+function fecharFora(ev,id){ if(ev.target.id===id) fechar(id); }
+function truncar(str,max){ return str.length>max?str.substring(0,max)+'...':str; }
+
+function iniciar(){
+  loading(true);
+  api({action:'getCiclos'}).then(function(res){
+    var ciclos=res.data||[];
+    var sel=document.getElementById('f-ciclo');
+    sel.innerHTML='<option value="">selecione</option>';
+    ciclos.forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+    if(ciclos.length){ sel.value=ciclos[0]; cicloAtual=ciclos[0]; carregarEscala(ciclos[0]); }
+    else { loading(false); }
+  }).catch(function(e){ loading(false); toast('Erro ciclos: '+e.message,'err'); });
+}
+
+function trocarCiclo(){
+  var c=document.getElementById('f-ciclo').value;
+  if(c){ cicloAtual=c; carregarEscala(c); }
+}
+
+function carregarEscala(ciclo){
+  loading(true); brutos=[]; filtrados=[]; transps=[];
+  Promise.all([
+    api({action:'getEscala', ciclo:ciclo}),
+    api({action:'listarTransportadoras'})
+  ]).then(function(res){
+    brutos = res[0].data||[];
+    transps = res[1].data||[];
+    popularTransps();
+    popularFiltrosDinamicos();
+    aplicarFiltros();
+    loading(false);
+  }).catch(function(er){ loading(false); toast('Erro escala: '+er.message,'err'); });
+}
+
+function popularTransps(){
+  ['f-transp','lote-sel'].forEach(function(id){
+    var s=document.getElementById(id);
+    s.innerHTML=s.id==='f-transp'?'<option value="">Todas</option>':'<option value="">— selecione —</option>';
+    transps.forEach(function(t){ var o=document.createElement('option'); o.value=t; o.textContent=t; s.appendChild(o); });
+  });
+}
+
+function popularFiltrosDinamicos(){
+  var campos={'f-giro':'giro','f-area':'area'};
+  Object.keys(campos).forEach(function(id){
+    var key=campos[id], s=document.getElementById(id), vis={};
+    s.innerHTML='<option value="">Todos</option>';
+    brutos.forEach(function(d){ var v=String(d[key]||'').trim(); if(v&&!vis[v]){ vis[v]=true; var o=document.createElement('option'); o.value=v; o.textContent=v; s.appendChild(o); } });
+  });
+}
+
+function aplicarFiltros(){
+  var fR=(document.getElementById('f-rota').value||'').trim().toLowerCase();
+  var fO=(document.getElementById('f-otim').value||'').trim().toLowerCase();
+  var fC=(document.getElementById('f-cidade').value||'').trim().toLowerCase();
+  var fT=(document.getElementById('f-tipo').value||'').trim().toLowerCase();
+  var fP=(document.getElementById('f-proj').value||'').trim().toLowerCase();
+  var fTr=document.getElementById('f-transp').value||'';
+  var fG=document.getElementById('f-giro').value||'';
+  var fA=document.getElementById('f-area').value||'';
+  var fS=document.getElementById('f-sem').checked;
+  filtrados=brutos.filter(function(d){
+    if(fR&&String(d.rota||'').toLowerCase().indexOf(fR)===-1) return false;
+    if(fO&&String(d.otimizada||'').toLowerCase().indexOf(fO)===-1) return false;
+    if(fC&&String(d.cidade||'').toLowerCase().indexOf(fC)===-1) return false;
+    if(fT&&String(d.tipo_veiculo||'').toLowerCase().indexOf(fT)===-1) return false;
+    if(fP&&String(d.projeto||'').toLowerCase().indexOf(fP)===-1) return false;
+    if(fTr&&d.transportadora!==fTr) return false;
+    if(fG&&d.giro!==fG) return false;
+    if(fA&&d.area!==fA) return false;
+    if(fS&&String(d.transportadora||'').trim()) return false;
+    return true;
+  });
+  if(sCampo){
+    filtrados.sort(function(a,b){
+      var va=String(a[sCampo]||''), vb=String(b[sCampo]||'');
+      var c=va<vb?-1:va>vb?1:0;
+      return sAsc?c:-c;
+    });
   }
+  atualizarStats();
+  renderTabela();
+}
 
-  function api(params){
-    return fetch(API,{method:'POST',body:JSON.stringify(params)}).then(function(r){return r.json();});
+function limparFiltros(){
+  ['f-rota','f-otim','f-cidade','f-tipo','f-proj'].forEach(function(id){ document.getElementById(id).value=''; });
+  ['f-transp','f-giro','f-area'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('f-sem').checked=false;
+  aplicarFiltros();
+}
+
+function toggleFiltros(){ document.getElementById('filtros-panel').classList.toggle('aberto'); }
+function sortBy(campo){ if(sCampo===campo) sAsc=!sAsc; else{ sCampo=campo; sAsc=true; } aplicarFiltros(); }
+
+function atualizarStats(){
+  var com=0, sem=0, pac=0;
+  filtrados.forEach(function(d){ if(String(d.transportadora||'').trim()) com++; else sem++; pac+=parseInt(d.pacotes||0,10); });
+  document.getElementById('s-total').textContent=brutos.length;
+  document.getElementById('s-filt').textContent=filtrados.length;
+  document.getElementById('s-com').textContent=com;
+  document.getElementById('s-sem').textContent=sem;
+  document.getElementById('s-pac').textContent=pac;
+  atualizarContadorTransp();
+}
+
+function atualizarContadorTransp(){
+  var contagem={};
+  brutos.forEach(function(d){
+    var t=String(d.transportadora||'').trim()||'SEM';
+    if(!contagem[t]) contagem[t]=0;
+    contagem[t]++;
+  });
+  var wrap=document.getElementById('s-transp-wrap');
+  var html='';
+  if(contagem['SEM']){
+    html+='<div class="stat" style="border-color:#fca5a5;min-width:100px"><div class="stat-v" style="font-size:1rem;color:#dc2626">'+contagem['SEM']+'</div><div class="stat-l" style="color:#dc2626">Sem transp.</div></div>';
+    delete contagem['SEM'];
   }
+  Object.keys(contagem).sort(function(a,b){ return contagem[b]-contagem[a]; }).forEach(function(t){
+    html+='<div class="stat" style="min-width:100px" title="'+t+'"><div class="stat-v" style="font-size:1rem">'+contagem[t]+'</div><div class="stat-l">'+truncar(t,13)+'</div></div>';
+  });
+  wrap.innerHTML=html||'<span style="font-size:11px;color:#aaa">Nenhuma alocada.</span>';
+}
 
-  function iniciar(){
-    loading(true);
-    Promise.all([
-      api({action:'getCiclos'}),
-      api({action:'listarTransportadoras'})
-    ]).then(function(res){
-      var ciclos = res[0].data || [];
-      transportadoras = res[1].data || [];
-      var sel = document.getElementById('selCiclo');
-      sel.innerHTML = '';
-      ciclos.forEach(function(c){
-        var o = document.createElement('option');
-        o.value=c; o.textContent=c; sel.appendChild(o);
+function renderTabela(){
+  var tbody=document.getElementById('tbody');
+  if(!filtrados.length){ tbody.innerHTML='<tr><td colspan="15" style="text-align:center;padding:24px;color:#aaa">Nenhuma rota encontrada.</td></tr>'; return; }
+  var html='';
+  filtrados.forEach(function(d,i){
+    var sem=!String(d.transportadora||'').trim();
+    html+='<tr class="'+(sem?'sem-tr':'')+'">'
+      +'<td>'+e(d.otimizada)+'</td>'
+      +'<td>'+e(d.rota)+'</td>'
+      +'<td>'+e(d.parada)+'</td>'
+      +'<td>'+e(d.pacotes)+'</td>'
+      +'<td>'+e(d.cidade)+'</td>'
+      +'<td>'+e(d.bairro)+'</td>'
+      +'<td>'+e(d.tipo_veiculo)+'</td>'
+      +'<td>'+e(d.ocup_volumosos)+'</td>'
+      +'<td>'+e(d.projeto)+'</td>'
+      +'<td>'+buildSel(i,d.transportadora)+'</td>'
+      +'<td>'+e(d.giro)+'</td>'
+      +'<td>'+e(d.area)+'</td>'
+      +'<td>'+e(d.doca)+'</td>'
+      +'<td>'+e(d.roteiro)+'</td>'
+      +'<td style="display:flex;gap:4px">'
+        +'<button class="btn b-detail" onclick="abrirDetalhe('+i+')">📦 Detalhe</button>'
+        +'<button class="btn b-del" onclick="limparLinha('+i+')">✕</button>'
+      +'</td>'
+    +'</tr>';
+  });
+  tbody.innerHTML=html;
+}
+
+function buildSel(idx,val){
+  var listId='transp-list-'+idx;
+  var valSafe=String(val||'').replace(/"/g,'');
+  var h='<datalist id="'+listId+'">';
+  transps.forEach(function(t){ h+='<option value="'+String(t).replace(/"/g,'')+'">' });
+  h+='</datalist>';
+  h+='<input type="text" class="sel-t" list="'+listId+'" value="'+valSafe+'" placeholder="Digite ou selecione..." onchange="mudaTransp('+idx+',this.value)">';
+  return h;
+}
+
+function mudaTransp(idx,val){
+  if(!filtrados[idx]) return;
+  filtrados[idx].transportadora=val;
+  var rota=filtrados[idx].rota, ciclo=filtrados[idx].ciclo;
+  for(var i=0;i<brutos.length;i++){ if(brutos[i].rota===rota&&brutos[i].ciclo===ciclo){ brutos[i].transportadora=val; break; } }
+  var tr=document.getElementById('tbody').rows[idx];
+  if(tr){ if(!val.trim()) tr.classList.add('sem-tr'); else tr.classList.remove('sem-tr'); }
+  atualizarStats();
+}
+
+function limparLinha(idx){ mudaTransp(idx,''); renderTabela(); }
+
+function aplicarLote(){
+  var v=document.getElementById('lote-sel').value;
+  if(!v){ toast('Selecione uma transportadora.','inf'); return; }
+  if(!confirm('Aplicar em '+filtrados.length+' rotas?')) return;
+  filtrados.forEach(function(d){
+    d.transportadora=v;
+    var rota=d.rota, ciclo=d.ciclo;
+    for(var i=0;i<brutos.length;i++){ if(brutos[i].rota===rota&&brutos[i].ciclo===ciclo){ brutos[i].transportadora=v; break; } }
+  });
+  renderTabela(); atualizarStats(); toast('✅ Aplicado em '+filtrados.length+' rotas.','ok');
+}
+
+function salvarEscala(){
+  if(!brutos.length){ toast('Nenhuma rota para salvar.','inf'); return; }
+  loading(true);
+  api({action:'salvarEscala', ciclo:cicloAtual, escalaData:brutos}).then(function(r){
+    loading(false);
+    r&&(r.success||r.ok)?toast('✅ Escala salva!','ok'):toast('Erro: '+(r&&r.message||'?'),'err');
+  }).catch(function(er){ loading(false); toast('Erro: '+er.message,'err'); });
+}
+
+function limparEscala(){
+  if(!confirm('Limpar transportadoras das rotas visíveis?')) return;
+  filtrados.forEach(function(d){
+    d.transportadora='';
+    for(var i=0;i<brutos.length;i++){ if(brutos[i].rota===d.rota&&brutos[i].ciclo===d.ciclo){ brutos[i].transportadora=''; break; } }
+  });
+  renderTabela(); atualizarStats(); toast('🗑️ Limpas. Clique em Salvar para persistir.','inf');
+}
+
+function abrirDetalhe(idx){
+  var d=filtrados[idx]; if(!d) return;
+  loading(true);
+  api({action:'getDetalheRota', ciclo:cicloAtual, rota:d.rota}).then(function(res){
+    loading(false);
+    var pacs=res.data||[];
+    document.getElementById('m-detalhe-titulo').textContent='📦 '+d.rota+(d.otimizada?' / '+d.otimizada:'');
+    var tbody=document.getElementById('tbody-detalhe');
+    if(!pacs.length){ tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:16px;color:#aaa">Sem pacotes.</td></tr>'; }
+    else{
+      var h='';
+      pacs.forEach(function(p){
+        h+='<tr><td>'+e(p.rota)+'</td><td>'+e(p.parada)+'</td><td>'+e(p.shipment_id)+'</td><td>'+e(p.cidade)+'</td><td>'+e(p.bairro)+'</td><td>'+e(p.cep)+'</td><td>'+e(p.merchant_type)+'</td><td>'+e(p.promessa_inicio)+'</td><td>'+e(p.promessa_fim)+'</td></tr>';
       });
-      cicloAtual = ciclos[0]||'AM';
-      carregarEscala();
-    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
-  }
+      tbody.innerHTML=h;
+    }
+    document.getElementById('m-detalhe').classList.add('on');
+  }).catch(function(er){ loading(false); toast('Erro detalhe: '+er.message,'err'); });
+}
 
-  function trocarCiclo(){
-    cicloAtual = document.getElementById('selCiclo').value;
-    carregarEscala();
-  }
+function abrirMLP(){ document.getElementById('mlp-nome').value=''; document.getElementById('m-mlp').classList.add('on'); }
 
-  function carregarEscala(){
-    loading(true);
-    api({action:'getEscala', ciclo:cicloAtual}).then(function(res){
-      dadosEscala = res.data || [];
-      preencherFiltroArea();
-      renderTabela();
-      loading(false);
-    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
-  }
+function salvarMLP(){
+  var nome=(document.getElementById('mlp-nome').value||'').trim();
+  if(!nome){ toast('Informe o nome.','inf'); return; }
+  loading(true);
+  api({action:'cadastrarTransportadora', ciclo:cicloAtual, nome:nome}).then(function(r){
+    loading(false); fechar('m-mlp');
+    if(r&&(r.success||r.ok)){ transps.push(nome); transps.sort(); popularTransps(); renderTabela(); toast('✅ '+nome+' cadastrada!','ok'); }
+    else toast((r&&r.message)||'Erro.','err');
+  }).catch(function(er){ loading(false); toast('Erro: '+er.message,'err'); });
+}
 
-  function preencherFiltroArea(){
-    var sel = document.getElementById('filtroArea');
-    sel.innerHTML = '<option value="">Todas as Áreas</option>';
-    var areas = {};
-    dadosEscala.forEach(function(d){ if(d.area) areas[d.area]=true; });
-    Object.keys(areas).sort().forEach(function(a){
-      var o=document.createElement('option'); o.value=a; o.textContent=a; sel.appendChild(o);
-    });
-  }
+function baixarXlsx(){
+  if(!filtrados.length){ toast('Sem rotas filtradas.','inf'); return; }
+  var rows=[['Otimizada','Rota','Paradas','Pacotes','Cidade','Bairro','Tipo Veículo','Ocup/Vol','Projeto','Transportadora','Giro','Área','Doca','Roteiro']];
+  filtrados.forEach(function(d){
+    rows.push([d.otimizada||'',d.rota||'',d.parada||'',d.pacotes||'',d.cidade||'',d.bairro||'',d.tipo_veiculo||'',d.ocup_volumosos||'',d.projeto||'',d.transportadora||'',d.giro||'',d.area||'',d.doca||'',d.roteiro||'']);
+  });
+  var csv=rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='escala_'+cicloAtual+'.csv'; a.click();
+  toast('⬇️ Download iniciado!','ok');
+}
 
-  function renderTabela(){
-    var fArea = document.getElementById('filtroArea').value;
-    var fRota = document.getElementById('filtroRota').value.toLowerCase();
-    var filtrado = dadosEscala.filter(function(d){
-      if(fArea && d.area!==fArea) return false;
-      if(fRota && String(d.rota||'').toLowerCase().indexOf(fRota)===-1 &&
-         String(d.otimizada||'').toLowerCase().indexOf(fRota)===-1) return false;
-      return true;
-    });
-    var html = '';
-    filtrado.forEach(function(d){
-      html += '<tr>'
-        +'<td><a href="#" onclick="verPacotes(\''+e(d.rota)+'\');return false" style="color:#1d4ed8;font-weight:700">'+e(d.rota)+'</a></td>'
-        +'<td>'+e(d.otimizada)+'</td>'
-        +'<td>'+e(d.parada)+'</td>'
-        +'<td>'+e(d.pacotes)+'</td>'
-        +'<td>'+e(d.cidade)+'</td>'
-        +'<td>'+e(d.bairro)+'</td>'
-        +'<td>'+e(d.tipo_veiculo)+'</td>'
-        +'<td>'+e(d.ocup_volumosos)+'</td>'
-        +'<td>'+e(d.giro)+'</td>'
-        +'<td>'+e(d.area)+'</td>'
-        +'<td>'+e(d.doca)+'</td>'
-        +'<td>'+e(d.roteiro)+'</td>'
-        +'<td>'
-          +'<select class="transp-sel" data-rota="'+e(d.rota)+'" onchange="marcarAlterado(this)">'
-          +'<option value="">-- Selecionar --</option>'
-          +transportadoras.map(function(t){
-            return '<option value="'+e(t)+'"'+(d.transportadora===t?' selected':'')+'>'+e(t)+'</option>';
-          }).join('')
-          +'</select>'
-        +'</td>'
-      +'</tr>';
-    });
-    document.getElementById('tbody').innerHTML = html || '<tr><td colspan="13" style="text-align:center;padding:24px;color:#aaa">Nenhuma rota encontrada.</td></tr>';
-  }
+function baixarCSV(){
+  if(!filtrados.length){ toast('Sem rotas filtradas.','inf'); return; }
+  var rows=[['Rota otimizada','Rota original','Cluster','Tipo de veículo','SPR','Transportadora']];
+  filtrados.forEach(function(d){
+    rows.push([d.otimizada||'',d.rota||'',d.area||'',d.tipo_veiculo||'',d.doca||'',d.transportadora||'']);
+  });
+  var csv=rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='transportadoras_'+cicloAtual+'.csv'; a.click();
+  toast('⬇️ Download iniciado!','ok');
+}
 
-  function marcarAlterado(sel){ sel.style.borderColor='#FFE600'; }
-
-  function salvar(){
-    loading(true);
-    var escalaData = [];
-    document.querySelectorAll('.transp-sel').forEach(function(sel){
-      escalaData.push({ rota: sel.dataset.rota, transportadora: sel.value });
-    });
-    api({action:'salvarEscala', ciclo:cicloAtual, escalaData:escalaData}).then(function(res){
-      loading(false);
-      mostrarMsg(res.message||'Salvo!', res.success||res.ok);
-      document.querySelectorAll('.transp-sel').forEach(function(s){ s.style.borderColor=''; });
-    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
-  }
-
-  function limpar(){
-    if(!confirm('Limpar todas as transportadoras salvas?')) return;
-    loading(true);
-    api({action:'salvarEscala', ciclo:cicloAtual, escalaData:[]}).then(function(){
-      carregarEscala();
-    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
-  }
-
-  function verPacotes(rota){
-    loading(true);
-    api({action:'getDetalheRota', ciclo:cicloAtual, rota:rota}).then(function(res){
-      loading(false);
-      var pacotes = res.data || [];
-      document.getElementById('modalTitulo').textContent = '📦 Pacotes da Rota: '+rota;
-      var html = '<table style="width:100%"><thead><tr>'
-        +'<th style="background:#333;color:#FFE600;padding:8px">Parada</th>'
-        +'<th style="background:#333;color:#FFE600;padding:8px">Shipment</th>'
-        +'<th style="background:#333;color:#FFE600;padding:8px">Cidade</th>'
-        +'<th style="background:#333;color:#FFE600;padding:8px">Bairro</th>'
-        +'<th style="background:#333;color:#FFE600;padding:8px">CEP</th>'
-        +'</tr></thead><tbody>';
-      pacotes.forEach(function(p){
-        html += '<tr>'
-          +'<td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">'+e(p.parada)+'</td>'
-          +'<td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">'+e(p.shipment_id)+'</td>'
-          +'<td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">'+e(p.cidade)+'</td>'
-          +'<td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">'+e(p.bairro)+'</td>'
-          +'<td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">'+e(p.cep)+'</td>'
-        +'</tr>';
-      });
-      html += '</tbody></table>';
-      document.getElementById('modalConteudo').innerHTML = html;
-      document.getElementById('modalDetalhe').className='modal-bg show';
-    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
-  }
-
-  function fecharModal(){ document.getElementById('modalDetalhe').className='modal-bg'; }
-
-  function baixarXlsx(){
-    mostrarMsg('⬇️ Use o botão no sistema original para baixar o XLSX.',true);
-  }
-
-  function e(v){
-    if(v===null||v===undefined)return'';
-    return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  iniciar();
+window.addEventListener('load', iniciar);
 </script>
 </body>
 </html>

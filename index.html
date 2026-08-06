@@ -9,9 +9,9 @@
     body{font-family:'Segoe UI',sans-serif;background:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
     .container{width:100%;max-width:400px;padding:24px}
     .logo{text-align:center;margin-bottom:32px}
-    .logo img{height:48px}
     .logo-txt{font-size:22px;font-weight:800;color:#333;margin-top:8px}
     .logo-sub{font-size:13px;color:#999;margin-top:4px}
+    .logo-emoji{font-size:48px;margin-bottom:4px}
     .card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,.07)}
     .card h2{font-size:18px;font-weight:700;color:#333;margin-bottom:6px}
     .card p{font-size:13px;color:#888;margin-bottom:24px}
@@ -36,28 +36,25 @@
 <body>
 <div class="container">
   <div class="logo">
-    <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="120" height="40" rx="8" fill="#FFE600"/>
-      <text x="60" y="27" text-anchor="middle" font-family="Segoe UI,sans-serif" font-weight="800" font-size="16" fill="#333">Mercado Livre</text>
-    </svg>
-    <div class="logo-txt">Painel Last Mile</div>
+    <div class="logo-emoji">🚚</div>
+    <div class="logo-txt">📦 Painel Last Mile</div>
     <div class="logo-sub">SSP34 — Controle de Expedição</div>
   </div>
   <div class="card">
-    <h2>Entrar</h2>
+    <h2>🔐 Entrar</h2>
     <p>Use seu email e senha cadastrados</p>
     <div class="erro" id="erro"></div>
     <div class="field">
-      <label>Email</label>
+      <label>📧 Email</label>
       <input type="email" id="email" placeholder="seu@email.com" onkeydown="onKey(event)">
     </div>
     <div class="field">
-      <label>Senha</label>
+      <label>🔑 Senha</label>
       <input type="password" id="senha" placeholder="••••••••" onkeydown="onKey(event)">
     </div>
     <div class="loading-wrap" id="loading"><div class="spinner"></div></div>
-    <button class="btn-login" id="btn-login" onclick="login()">Entrar</button>
-    <button class="btn-sem-login" onclick="entrarSemLogin()">Entrar sem login (somente Mapa)</button>
+    <button class="btn-login" id="btn-login" onclick="login()">✅ Entrar</button>
+    <button class="btn-sem-login" onclick="entrarSemLogin()">👁️ Entrar sem login (somente Mapa)</button>
   </div>
 </div>
 <script>
@@ -79,7 +76,7 @@
   function login(){
     var email=document.getElementById('email').value.trim();
     var senha=document.getElementById('senha').value.trim();
-    if(!email||!senha){mostrarErro('Preencha email e senha.');return;}
+    if(!email||!senha){mostrarErro('⚠️ Preencha email e senha.');return;}
     document.getElementById('erro').className='erro';
     setLoading(true);
     fetch(API, {
@@ -93,12 +90,12 @@
         sessionStorage.setItem('usuario', JSON.stringify(res));
         window.location.href='home.html';
       } else {
-        mostrarErro(res.msg||'Erro ao fazer login.');
+        mostrarErro('❌ '+(res.msg||'Erro ao fazer login.'));
       }
     })
     .catch(function(e){
       setLoading(false);
-      mostrarErro('Erro de conexão: '+e.message);
+      mostrarErro('❌ Erro de conexão: '+e.message);
     });
   }
 
@@ -106,6 +103,12 @@
     sessionStorage.setItem('usuario', JSON.stringify({email:'visitante',grupo:'Operacao',transportadora:''}));
     window.location.href='mapa.html';
   }
+
+  // Se já está logado vai direto para home
+  try {
+    var u = JSON.parse(sessionStorage.getItem('usuario'));
+    if(u && u.email && u.email !== 'visitante') window.location.href='home.html';
+  } catch(e){}
 </script>
 </body>
 </html>

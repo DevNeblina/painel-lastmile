@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controle de Almoço — Painel Last Mile</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;font-size:12px;color:#1e293b}
+  #header{position:sticky;top:0;z-index:100;background:#FFE600;padding:12px 20px;display:flex;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:2px solid #333;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  #header h1{font-size:15px;color:#333;font-weight:700;margin-right:8px;white-space:nowrap}
+  .btn{padding:7px 14px;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;transition:filter .15s,transform .1s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+  .btn:hover{filter:brightness(.92)}
+  .btn:active{transform:scale(.97)}
+  .b-home{background:#333;color:#FFE600}
+  .b-refresh{background:#0d9488;color:#fff}
+  .page{padding:18px 20px;display:flex;flex-direction:column;gap:16px;max-width:1200px;margin:0 auto}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:18px 20px}
+  .card-title{font-size:13px;font-weight:700;color:#333;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+  .card-title::before{content:'';display:block;width:4px;height:18px;border-radius:3px;background:#FFE600;flex-shrink:0}
+  .bip-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:10px 0}
+  .bip-ciclo{display:flex;gap:8px;align-items:center}
+  .bip-ciclo label{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px}
+  .bip-ciclo select{padding:8px 12px;border:1.5px solid #cbd5e1;border-radius:7px;font-size:12px;background:#f8fafc}
+  .bip-ciclo select:focus{outline:none;border-color:#FFE600;box-shadow:0 0 0 3px rgba(255,230,0,.2)}
+  .bip-input-wrap{display:flex;gap:8px;align-items:center;width:100%;max-width:540px}
+  #inp-bip{flex:1;padding:14px 16px;border:2px solid #cbd5e1;border-radius:10px;font-size:16px;font-weight:700;text-align:center;letter-spacing:2px;background:#f8fafc;color:#333;transition:border-color .15s,box-shadow .15s}
+  #inp-bip:focus{outline:none;border-color:#FFE600;box-shadow:0 0 0 4px rgba(255,230,0,.2);background:#fff}
+  #inp-bip:disabled{background:#e2e8f0;color:#94a3b8;cursor:not-allowed}
+  #inp-bip::placeholder{font-size:13px;font-weight:400;letter-spacing:0;color:#94a3b8}
+  .btn-confirmar{padding:14px 22px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:filter .15s,transform .1s;flex-shrink:0}
+  .btn-confirmar:hover{filter:brightness(1.1)}
+  .btn-confirmar:active{transform:scale(.97)}
+  .btn-confirmar:disabled{background:#94a3b8;cursor:not-allowed;filter:none}
+  .bip-feedback{width:100%;max-width:540px;padding:12px 16px;border-radius:9px;font-size:13px;font-weight:600;text-align:center;display:none;transition:all .2s}
+  .bip-feedback.ok{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+  .bip-feedback.err{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+  .bip-feedback.warn{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+  .bip-feedback.inf{background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe}
+  .bip-feedback.show{display:block}
+  .stats-row{display:flex;gap:12px;flex-wrap:wrap}
+  .stat{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 20px;min-width:160px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);cursor:pointer;transition:box-shadow .15s,transform .1s}
+  .stat:hover{box-shadow:0 4px 14px rgba(0,0,0,.12);transform:translateY(-1px)}
+  .stat-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .stat-icon.green{background:#dcfce7}
+  .stat-icon.amber{background:#fef3c7}
+  .stat-icon.red{background:#fee2e2}
+  .stat-icon.rose{background:#ffe4e6}
+  .stat-icon.teal{background:#ccfbf1}
+  .stat-v{font-size:22px;font-weight:800;color:#333;line-height:1}
+  .stat-l{font-size:10px;color:#64748b;margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:8000;align-items:center;justify-content:center}
+  .modal-bg.on{display:flex}
+  .modal{background:#fff;border-radius:14px;padding:24px;width:90%;max-width:540px;max-height:80vh;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 32px rgba(0,0,0,.22)}
+  .modal-header{display:flex;align-items:center;justify-content:space-between}
+  .modal-title{font-size:14px;font-weight:700;color:#333}
+  .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;line-height:1}
+  .modal-close:hover{color:#333}
+  .modal-body{overflow-y:auto;flex:1}
+  .modal-list{display:flex;flex-direction:column;gap:6px}
+  .modal-item{padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .modal-item-name{font-weight:700;color:#333}
+  .modal-item-info{color:#64748b;font-size:11px;text-align:right}
+  .badge{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap}
+  .badge.trabalhando{background:#dcfce7;color:#166534}
+  .badge.almocando{background:#fef3c7;color:#92400e}
+  .badge.atrasado{background:#fee2e2;color:#991b1b}
+  .badge.fora{background:#ffe4e6;color:#9f1239}
+  .badge.retornou{background:#ccfbf1;color:#134e4a}
+  .badge.retornou-atraso{background:#fef3c7;color:#92400e}
+  .badge.retornou-fora{background:#ffe4e6;color:#9f1239}
+  .badge.retornou-fora-atraso{background:#fee2e2;color:#991b1b}
+  .table-wrap{overflow:auto;border-radius:8px;border:1px solid #e2e8f0}
+  table{width:100%;border-collapse:collapse;background:#fff;min-width:700px}
+  thead tr{background:#333}
+  thead th{padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:#FFE600;white-space:nowrap;letter-spacing:.3px}
+  tbody td{padding:9px 12px;border-bottom:1px solid #f1f5f9;font-size:11px;color:#334155;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:#f8fafc}
+  tbody tr:hover{background:#fffbeb}
+  .help{font-size:11px;color:#64748b;line-height:1.5;margin-top:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:9px 12px}
+  #loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center}
+  #loading.on{display:flex}
+  .spin{width:46px;height:46px;border:4px solid #ddd;border-top-color:#FFE600;border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #toasts{position:fixed;bottom:18px;right:18px;z-index:9998;display:flex;flex-direction:column;gap:7px}
+  .tst{padding:11px 18px;border-radius:9px;color:#fff;font-size:12px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.28);animation:tin .2s ease;max-width:340px;line-height:1.35}
+  .tst.ok{background:#16a34a}.tst.err{background:#dc2626}.tst.inf{background:#2563eb}
+  @keyframes tin{from{transform:translateX(90px);opacity:0}to{transform:translateX(0);opacity:1}}
+</style>
+</head>
+<body>
+<div id="loading"><div class="spin"></div></div>
+<div id="toasts"></div>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Colaboradores</div>
+      <button class="modal-close" onclick="fecharModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-list" id="modal-list"></div>
+    </div>
+  </div>
+</div>
+
+<div id="header">
+  <h1>🍽️ Controle de Almoço</h1>
+  <button class="btn b-home"    onclick="voltar()">🏠 Home</button>
+  <button class="btn b-refresh" onclick="atualizarRegistros()">🔄 Atualizar</button>
+</div>
+
+<div class="page">
+  <div class="card">
+    <div class="card-title">Bipagem</div>
+    <div class="bip-wrap">
+      <div class="bip-ciclo">
+        <label>Ciclo</label>
+        <select id="sel-ciclo" onchange="trocarCiclo()"><option value="">Carregando...</option></select>
+      </div>
+      <div class="bip-input-wrap">
+        <input id="inp-bip" type="text" placeholder="Bipe o QR ou digite o LMS..." autocomplete="off" onkeydown="onBipKeydown(event)">
+        <button class="btn-confirmar" id="btn-confirmar" onclick="confirmarBipagem()">✔ Confirmar</button>
+      </div>
+      <div class="bip-feedback" id="bip-feedback"></div>
+    </div>
+    <div class="help">
+      O colaborador bipa o QR Code — o sistema registra <b>saída</b> ou <b>retorno</b> automaticamente.<br>
+      Caso prefira digitar o LMS manualmente, use o botão <b>Confirmar</b>.
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat" onclick="abrirModal('trabalhando')"><div class="stat-icon green">🟢</div><div><div class="stat-v" id="s-trabalhando">0</div><div class="stat-l">Trabalhando</div></div></div>
+    <div class="stat" onclick="abrirModal('almocando')"><div class="stat-icon amber">🍽️</div><div><div class="stat-v" id="s-almocando">0</div><div class="stat-l">Almoçando</div></div></div>
+    <div class="stat" onclick="abrirModal('atrasado')"><div class="stat-icon red">⚠️</div><div><div class="stat-v" id="s-atrasado">0</div><div class="stat-l">Atrasados</div></div></div>
+    <div class="stat" onclick="abrirModal('fora')"><div class="stat-icon rose">🔴</div><div><div class="stat-v" id="s-fora">0</div><div class="stat-l">Saída fora do horário</div></div></div>
+    <div class="stat" onclick="abrirModal('retornou')"><div class="stat-icon teal">✅</div><div><div class="stat-v" id="s-retornou">0</div><div class="stat-l">Retornaram</div></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Registro do dia</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Vaga</th><th>LMS</th><th>Nome</th>
+          <th>Horário previsto</th><th>Saída</th><th>Retorno</th><th>Status</th>
+        </tr></thead>
+        <tbody id="tbody-registros">
+          <tr><td colspan="7" style="text-align:center;padding:24px;color:#94a3b8">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
+var usuario = null;
+var cicloAtual = '';
+var registros = [];
+var escalaVagas = [];
+var autoRefreshTimer = null;
+var feedbackTimer = null;
+
+try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
+if (!usuario || !usuario.email) { window.location.href='index.html'; }
+
+function api(params){ return fetch(API,{method:'POST',body:JSON.stringify(params)}).then(function(r){return r.json();}); }
+function voltar(){ window.location.href='home.html'; }
+function loading(s){ var el=document.getElementById('loading'); s?el.classList.add('on'):el.classList.remove('on'); }
+function toast(msg,tipo){ var c=document.getElementById('toasts'); var el=document.createElement('div'); el.className='tst '+(tipo||'inf'); el.textContent=msg; c.appendChild(el); setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},5000); }
+function e(v){ if(v===null||v===undefined)return''; return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function iniciar(){
+  loading(true);
+  api({action:'getCiclos'}).then(function(res){
+    var ciclos=res.data||[];
+    var sel=document.getElementById('sel-ciclo');
+    sel.innerHTML='';
+    ciclos.forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+    cicloAtual=(ciclos&&ciclos.length)?ciclos[0]:'AM';
+    sel.value=cicloAtual;
+    carregarTudo();
+    iniciarAutoRefresh();
+    document.getElementById('inp-bip').focus();
+  }).catch(function(er){ loading(false); toast('Erro: '+er.message,'err'); });
+}
+
+function trocarCiclo(){ cicloAtual=document.getElementById('sel-ciclo').value||'AM'; carregarTudo(); }
+
+function carregarTudo(){
+  loading(true);
+  Promise.all([
+    api({action:'getEscalaVagas', ciclo:cicloAtual}),
+    api({action:'getRegistrosAlmoco', ciclo:cicloAtual})
+  ]).then(function(res){
+    escalaVagas=Array.isArray(res[0].data)?res[0].data:Array.isArray(res[0])?res[0]:[];
+    registros=Array.isArray(res[1].data)?res[1].data:Array.isArray(res[1])?res[1]:[];
+    renderTabela();
+    atualizarStats();
+    loading(false);
+    document.getElementById('inp-bip').focus();
+  }).catch(function(er){ loading(false); toast('Erro ao carregar: '+er.message,'err'); });
+}
+
+function atualizarRegistros(){
+  api({action:'getRegistrosAlmoco', ciclo:cicloAtual}).then(function(res){
+    registros=Array.isArray(res.data)?res.data:Array.isArray(res)?res:[];
+    renderTabela();
+    atualizarStats();
+    document.getElementById('inp-bip').focus();
+  }).catch(function(er){ toast('Erro ao atualizar: '+er.message,'err'); });
+}
+
+function iniciarAutoRefresh(){
+  if(autoRefreshTimer) clearInterval(autoRefreshTimer);
+  autoRefreshTimer=setInterval(function(){ atualizarRegistros(); },30000);
+}
+
+function onBipKeydown(e){ if(e.key==='Enter') confirmarBipagem(); }
+
+function setBipando(ativo){
+  var inp=document.getElementById('inp-bip');
+  var btn=document.getElementById('btn-confirmar');
+  inp.disabled=ativo; btn.disabled=ativo;
+  inp.placeholder=ativo?'Aguarde...':'Bipe o QR ou digite o LMS...';
+}
+
+function confirmarBipagem(){
+  var lms=(document.getElementById('inp-bip').value||'').trim();
+  document.getElementById('inp-bip').value='';
+  if(!lms){ document.getElementById('inp-bip').focus(); return; }
+  setBipando(true);
+  mostrarFeedback({ok:true, msg:'⏳ Processando...', tipo:'inf'});
+  api({action:'registrarBipagem', ciclo:cicloAtual, lms:lms}).then(function(r){
+    setBipando(false);
+    mostrarFeedback(r);
+    if(r&&r.ok){ atualizarRegistros(); }
+    setTimeout(function(){ document.getElementById('inp-bip').focus(); },100);
+  }).catch(function(er){
+    setBipando(false);
+    mostrarFeedback({ok:false, msg:'Erro: '+er.message, tipo:'err'});
+    setTimeout(function(){ document.getElementById('inp-bip').focus(); },100);
+  });
+}
+
+function mostrarFeedback(r){
+  var el=document.getElementById('bip-feedback');
+  if(feedbackTimer){ clearTimeout(feedbackTimer); feedbackTimer=null; }
+  el.className='bip-feedback show';
+  if(r&&r.tipo==='inf'){ el.classList.add('inf'); el.textContent=(r&&r.msg)||'⏳ Processando...'; return; }
+  if(r&&r.ok) el.classList.add('ok');
+  else if(r&&r.tipo==='warn') el.classList.add('warn');
+  else el.classList.add('err');
+  el.textContent=(r&&r.msg)||'Erro desconhecido.';
+  feedbackTimer=setTimeout(function(){ el.className='bip-feedback'; el.textContent=''; feedbackTimer=null; },4000);
+}
+
+function atualizarStats(){
+  var counts={trabalhando:0,almocando:0,atrasado:0,fora:0,retornou:0};
+  var lmsBipados={};
+  registros.forEach(function(r){ lmsBipados[r.lms]=true; });
+  escalaVagas.forEach(function(v){ if(v.lms&&!lmsBipados[v.lms]) counts.trabalhando++; });
+  registros.forEach(function(r){
+    var s=String(r.status||'').toLowerCase();
+    if(s==='almoçando') counts.almocando++;
+    else if(s==='atrasado') counts.atrasado++;
+    else if(s==='saída fora do horário') counts.fora++;
+    else if(s.indexOf('retornou')===0) counts.retornou++;
+  });
+  document.getElementById('s-trabalhando').textContent=counts.trabalhando;
+  document.getElementById('s-almocando').textContent=counts.almocando;
+  document.getElementById('s-atrasado').textContent=counts.atrasado;
+  document.getElementById('s-fora').textContent=counts.fora;
+  document.getElementById('s-retornou').textContent=counts.retornou;
+}
+
+function abrirModal(tipo){
+  var titulos={trabalhando:'🟢 Trabalhando',almocando:'🍽️ Almoçando',atrasado:'⚠️ Atrasados',fora:'🔴 Saída fora do horário',retornou:'✅ Retornaram'};
+  var itens=[];
+  if(tipo==='trabalhando'){
+    var lmsBipados={};
+    registros.forEach(function(r){ lmsBipados[r.lms]=true; });
+    escalaVagas.forEach(function(v){ if(v.lms&&!lmsBipados[v.lms]) itens.push({nome:v.nome||'-',vaga:v.vaga||'-',info:'Vaga '+v.vaga,status:'trabalhando'}); });
+  } else {
+    registros.forEach(function(r){
+      var s=String(r.status||'').toLowerCase();
+      var match=false;
+      if(tipo==='almocando'&&s==='almoçando') match=true;
+      else if(tipo==='atrasado'&&s==='atrasado') match=true;
+      else if(tipo==='fora'&&s==='saída fora do horário') match=true;
+      else if(tipo==='retornou'&&s.indexOf('retornou')===0) match=true;
+      if(match) itens.push({nome:r.nome||'-',vaga:r.vaga||'-',info:'Saída: '+(r.saida||'-')+' | Retorno: '+(r.retorno||'-'),status:s});
+    });
+  }
+  document.getElementById('modal-title').textContent=titulos[tipo]||'Colaboradores';
+  var html='';
+  if(!itens.length){ html='<div style="text-align:center;padding:20px;color:#94a3b8">Nenhum colaborador neste status.</div>'; }
+  else{
+    itens.forEach(function(it){
+      html+='<div class="modal-item">'
+        +'<div><div class="modal-item-name">'+e(it.nome)+'</div>'
+        +'<div style="font-size:10px;color:#94a3b8;margin-top:2px">Vaga '+e(it.vaga)+'</div></div>'
+        +'<div class="modal-item-info">'+e(it.info)+'<br>'
+        +'<span class="badge '+badgeClass(it.status)+'">'+e(it.status)+'</span></div>'
+        +'</div>';
+    });
+  }
+  document.getElementById('modal-list').innerHTML=html;
+  document.getElementById('modal-bg').classList.add('on');
+}
+
+function fecharModal(){ document.getElementById('modal-bg').classList.remove('on'); document.getElementById('inp-bip').focus(); }
+
+function badgeClass(s){
+  s=String(s||'').toLowerCase();
+  if(s==='trabalhando') return 'trabalhando';
+  if(s==='almoçando') return 'almocando';
+  if(s==='atrasado') return 'atrasado';
+  if(s==='saída fora do horário') return 'fora';
+  if(s==='retornou') return 'retornou';
+  if(s==='retornou com atraso') return 'retornou-atraso';
+  if(s==='retornou fora do horário') return 'retornou-fora';
+  if(s==='retornou fora do horário com atraso') return 'retornou-fora-atraso';
+  return '';
+}
+
+function renderTabela(){
+  var tbody=document.getElementById('tbody-registros');
+  if(!registros.length){ tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:#94a3b8">Nenhum registro hoje.</td></tr>'; return; }
+  var html='';
+  registros.forEach(function(r){
+    html+='<tr>'
+      +'<td>'+e(r.vaga||'-')+'</td>'
+      +'<td><span style="font-family:monospace;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:2px 7px">'+e(r.lms||'-')+'</span></td>'
+      +'<td>'+e(r.nome||'-')+'</td>'
+      +'<td>'+e(r.horario_almoco||'-')+'</td>'
+      +'<td>'+e(r.saida||'-')+'</td>'
+      +'<td>'+e(r.retorno||'-')+'</td>'
+      +'<td><span class="badge '+badgeClass(r.status)+'">'+e(r.status||'-')+'</span></td>'
+    +'</tr>';
+  });
+  tbody.innerHTML=html;
+}
+
+window.addEventListener('load', iniciar);
+</script>
+</body>
+</html>

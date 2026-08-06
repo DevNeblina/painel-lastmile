@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Romaneios — Painel Last Mile</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:12px}
+  #header{position:sticky;top:0;z-index:100;background:#FFE600;padding:10px 14px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;border-bottom:2px solid #333;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  #header h1{font-size:14px;color:#333;font-weight:700;margin-right:6px}
+  .btn{padding:6px 11px;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;transition:opacity .15s;white-space:nowrap}
+  .btn:hover{opacity:.85}
+  .b-home{background:#333;color:#FFE600}
+  .b-reload{background:#0f766e;color:#fff}
+  .b-print{background:#dc2626;color:#fff}
+  .b-selall{background:#1d4ed8;color:#fff}
+  .filtros{background:#fff;padding:10px 14px;border-bottom:1px solid #eee;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+  .fg{display:flex;flex-direction:column;gap:3px}
+  .fg label{font-size:10px;font-weight:700;color:#555;text-transform:uppercase}
+  .fg select,.fg input{padding:5px 7px;border:1.5px solid #ddd;border-radius:5px;font-size:11px;min-width:150px}
+  .fg select:focus,.fg input:focus{outline:none;border-color:#FFE600}
+  #stats{padding:6px 14px;background:#fff;border-bottom:1px solid #eee;font-size:11px;color:#555}
+  #lista-wrap{padding:10px 14px 60px}
+  .rota-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .1s}
+  .rota-card:hover{background:#fffbeb}
+  .rota-card.selecionada{background:#fffbeb;border-color:#FFE600}
+  .rota-card input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#333}
+  .rota-info{flex:1;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
+  .rota-nome{font-weight:700;font-size:12px;color:#333}
+  .rota-tag{font-size:10px;color:#64748b;background:#f1f5f9;padding:2px 7px;border-radius:10px}
+  .rota-tag.hybrid{background:#fffbeb;color:#854d0e;border:1px solid #FFE600}
+  #loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
+  #loading.on{display:flex}
+  .spin{width:44px;height:44px;border:4px solid #ddd;border-top-color:#FFE600;border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #toasts{position:fixed;bottom:16px;right:16px;z-index:9998;display:flex;flex-direction:column;gap:6px}
+  .tst{padding:9px 16px;border-radius:7px;color:#fff;font-size:12px;font-weight:600;box-shadow:0 3px 10px rgba(0,0,0,.3);animation:tin .2s ease}
+  .tst.ok{background:#16a34a}.tst.err{background:#dc2626}.tst.inf{background:#0369a1}
+  @keyframes tin{from{transform:translateX(80px);opacity:0}to{transform:translateX(0);opacity:1}}
+  #print-area{display:none}
+  @media print {
+    body > *:not(#print-area){display:none !important}
+    #print-area{display:block !important}
+    .romaneio-page{width:210mm;min-height:270mm;max-height:290mm;padding:4mm 6mm;page-break-after:always;font-family:Arial,sans-serif;font-size:8pt;overflow:hidden;box-sizing:border-box}
+    .romaneio-page:last-child{page-break-after:auto}
+    .rom-header{display:grid;grid-template-columns:1fr 1fr 1.6fr;border:1.5px solid #000;margin-bottom:2mm}
+    .rom-header-cell{padding:2mm 3mm;border-right:1px solid #000;font-size:8pt}
+    .rom-header-cell:last-child{border-right:none}
+    .rom-header-cell .label{font-size:7pt;color:#555}
+    .rom-header-cell .value{font-weight:700;font-size:10pt}
+    .rom-header-cell .rota-big{font-size:14pt;font-weight:900;text-align:center}
+    .rom-info{display:grid;grid-template-columns:1fr 1fr 1fr 2fr;border:1px solid #000;border-top:none;margin-bottom:2mm}
+    .rom-info-cell{padding:1mm 3mm;border-right:1px solid #000;font-size:7.5pt}
+    .rom-info-cell:last-child{border-right:none;font-size:7pt;font-weight:700;display:flex;align-items:center;justify-content:center;text-align:center}
+    .rom-info-cell .ilabel{font-size:6.5pt;color:#555;display:block}
+    .rom-info-cell .ivalue{font-weight:700;font-size:9pt}
+    .rom-table{width:100%;border-collapse:collapse;font-size:6.5pt}
+    .rom-table th{background:#000;color:#fff;padding:1mm 2mm;text-align:left;font-size:6.5pt;font-weight:700}
+    .rom-table td{padding:0.6mm 2mm;border-bottom:0.3px solid #ccc;font-size:6.5pt}
+    .rom-table tr:nth-child(even) td{background:#f5f5f5}
+    @page{size:A4 portrait;margin:5mm}
+  }
+</style>
+</head>
+<body>
+<div id="loading"><div class="spin"></div></div>
+<div id="toasts"></div>
+<div id="print-area"></div>
+
+<div id="header">
+  <h1>🗒️ Romaneios</h1>
+  <button class="btn b-home"   onclick="voltar()">🏠 Home</button>
+  <button class="btn b-reload" onclick="recarregar()">🔄 Atualizar</button>
+  <button class="btn b-selall" onclick="selecionarTodos()">☑️ Selecionar Todos</button>
+  <button class="btn b-print"  onclick="imprimirSelecionados()">🖨️ Imprimir Selecionados</button>
+</div>
+
+<div class="filtros">
+  <div class="fg"><label>Ciclo</label><select id="f-ciclo" onchange="trocarCiclo()"></select></div>
+  <div class="fg"><label>Transportadora</label><select id="f-transp" onchange="aplicarFiltros()"><option value="">Todas</option></select></div>
+  <div class="fg"><label>Giro</label><select id="f-giro" onchange="aplicarFiltros()"><option value="">Todos</option></select></div>
+  <div class="fg"><label>Rota</label><input id="f-rota" oninput="aplicarFiltros()" placeholder="Buscar..."></div>
+</div>
+
+<div id="stats"></div>
+<div id="lista-wrap"></div>
+
+<script>
+var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
+var usuario = null;
+try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
+if (!usuario || !usuario.email) { window.location.href='index.html'; }
+
+var brutos=[], filtrados=[], pacotesCache={}, cicloAtual='';
+var MAX_LINHAS = 53;
+
+function api(params){ return fetch(API,{method:'POST',body:JSON.stringify(params)}).then(function(r){return r.json();}); }
+function voltar(){ window.location.href='home.html'; }
+function recarregar(){ pacotesCache={}; carregarEscala(cicloAtual); }
+function loading(s){ var el=document.getElementById('loading'); s?el.classList.add('on'):el.classList.remove('on'); }
+function toast(msg,tipo){ var c=document.getElementById('toasts'); var el=document.createElement('div'); el.className='tst '+(tipo||'inf'); el.textContent=msg; c.appendChild(el); setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},4000); }
+function e(v){ if(v===null||v===undefined)return''; return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function iniciar(){
+  loading(true);
+  api({action:'getCiclos'}).then(function(res){
+    var ciclos=res.data||[];
+    var sel=document.getElementById('f-ciclo');
+    sel.innerHTML='';
+    ciclos.forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+    cicloAtual=ciclos[0]||'AM';
+    carregarEscala(cicloAtual);
+  }).catch(function(e){ loading(false); toast('Erro: '+e.message,'err'); });
+}
+
+function trocarCiclo(){
+  cicloAtual=document.getElementById('f-ciclo').value;
+  pacotesCache={};
+  carregarEscala(cicloAtual);
+}
+
+function carregarEscala(ciclo){
+  loading(true); brutos=[]; filtrados=[];
+  api({action:'getEscala', ciclo:ciclo}).then(function(res){
+    brutos=res.data||[];
+    popularFiltros();
+    aplicarFiltros();
+    loading(false);
+  }).catch(function(er){ loading(false); toast('Erro escala: '+er.message,'err'); });
+}
+
+function popularFiltros(){
+  var selT=document.getElementById('f-transp');
+  var selG=document.getElementById('f-giro');
+  var visT={}, visG={};
+  selT.innerHTML='<option value="">Todas</option>';
+  selG.innerHTML='<option value="">Todos</option>';
+  brutos.forEach(function(d){
+    var t=String(d.transportadora||'').trim();
+    var g=String(d.giro||'').trim();
+    if(t&&!visT[t]){ visT[t]=true; var o=document.createElement('option'); o.value=t; o.textContent=t; selT.appendChild(o); }
+    if(g&&!visG[g]){ visG[g]=true; var o=document.createElement('option'); o.value=g; o.textContent=g; selG.appendChild(o); }
+  });
+}
+
+function aplicarFiltros(){
+  var fT=document.getElementById('f-transp').value;
+  var fG=document.getElementById('f-giro').value;
+  var fR=(document.getElementById('f-rota').value||'').trim().toLowerCase();
+  filtrados=brutos.filter(function(d){
+    if(fT&&d.transportadora!==fT) return false;
+    if(fG&&d.giro!==fG) return false;
+    if(fR&&String(d.rota||'').toLowerCase().indexOf(fR)===-1&&String(d.otimizada||'').toLowerCase().indexOf(fR)===-1) return false;
+    return true;
+  });
+  filtrados.sort(function(a,b){
+    var va=String(a.otimizada||a.rota||'').toUpperCase();
+    var vb=String(b.otimizada||b.rota||'').toUpperCase();
+    return va<vb?-1:va>vb?1:0;
+  });
+  renderLista();
+}
+
+function renderLista(){
+  var wrap=document.getElementById('lista-wrap');
+  var stats=document.getElementById('stats');
+  stats.textContent=filtrados.length+' rota(s) encontrada(s)';
+  if(!filtrados.length){ wrap.innerHTML='<div style="padding:24px;text-align:center;color:#aaa">Nenhuma rota encontrada.</div>'; return; }
+  var html='';
+  filtrados.forEach(function(d,i){
+    var isHybrid=String(d.projeto||'').toLowerCase().indexOf('hybrid')>-1;
+    html+='<div class="rota-card" id="card-'+i+'" onclick="toggleCard('+i+')">'
+      +'<input type="checkbox" id="chk-'+i+'" onclick="event.stopPropagation();toggleCard('+i+')">'
+      +'<div class="rota-info">'
+      +'<span class="rota-nome">'+(d.otimizada||d.rota)+(isHybrid?' 💰':'')+'</span>'
+      +'<span class="rota-tag">'+e(d.rota)+'</span>'
+      +(d.transportadora?'<span class="rota-tag">🚛 '+e(d.transportadora)+'</span>':'<span class="rota-tag" style="color:#dc2626">Sem transp.</span>')
+      +(d.giro?'<span class="rota-tag">⚙️ '+e(d.giro)+'</span>':'')
+      +'<span class="rota-tag">📦 '+e(d.pacotes)+' pcts</span>'
+      +'<span class="rota-tag">📍 '+e(d.area)+'</span>'
+      +(isHybrid?'<span class="rota-tag hybrid">💰 Híbrida</span>':'')
+      +'</div></div>';
+  });
+  wrap.innerHTML=html;
+}
+
+function toggleCard(i){
+  var chk=document.getElementById('chk-'+i);
+  var card=document.getElementById('card-'+i);
+  chk.checked=!chk.checked;
+  if(chk.checked) card.classList.add('selecionada');
+  else card.classList.remove('selecionada');
+}
+
+function selecionarTodos(){
+  var todos=document.querySelectorAll('[id^="chk-"]');
+  var algumDesmarcado=Array.prototype.some.call(todos,function(c){ return !c.checked; });
+  todos.forEach(function(chk,i){
+    chk.checked=algumDesmarcado;
+    var card=document.getElementById('card-'+i);
+    if(card){ if(algumDesmarcado) card.classList.add('selecionada'); else card.classList.remove('selecionada'); }
+  });
+}
+
+function imprimirSelecionados(){
+  var selecionadas=[];
+  filtrados.forEach(function(d,i){
+    var chk=document.getElementById('chk-'+i);
+    if(chk&&chk.checked) selecionadas.push(d);
+  });
+  if(!selecionadas.length){ toast('Selecione ao menos uma rota.','inf'); return; }
+  toast('Carregando pacotes...','inf');
+  loading(true);
+  var todasCached=selecionadas.every(function(d){ return pacotesCache[d.rota]; });
+  if(todasCached){ gerarImpressao(selecionadas); return; }
+  api({action:'getTodosPacotes', ciclo:cicloAtual}).then(function(res){
+    var mapaCompleto=res.data||{};
+    Object.keys(mapaCompleto).forEach(function(rota){ pacotesCache[rota]=mapaCompleto[rota]; });
+    toast('✅ '+Object.keys(mapaCompleto).length+' rotas carregadas!','ok');
+    gerarImpressao(selecionadas);
+  }).catch(function(er){ loading(false); toast('Erro: '+er.message,'err'); });
+}
+
+function gerarImpressao(rotas){
+  loading(false);
+  var hoje=new Date();
+  var dataStr=String(hoje.getDate()).padStart(2,'0')+'/'+String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
+  var html='';
+  rotas.forEach(function(d){
+    var pacs=pacotesCache[d.rota]||[];
+    var linhas=pacs.slice(0,MAX_LINHAS);
+    html+='<div class="romaneio-page">';
+    html+='<div class="rom-header">'
+      +'<div class="rom-header-cell"><div class="value">SSP34 COTIA</div><div class="label">'+dataStr+'</div></div>'
+      +'<div class="rom-header-cell"><div class="label">TRANSPORTADORA</div><div class="value">'+(d.transportadora||'—')+'</div></div>'
+      +'<div class="rom-header-cell" style="display:flex;align-items:center;justify-content:center"><div class="rota-big">ROTA: '+(d.otimizada||d.rota)+'</div></div>'
+      +'</div>';
+    html+='<div class="rom-info">'
+      +'<div class="rom-info-cell"><span class="ilabel">GIRO</span><span class="ivalue">'+(d.giro||'—')+'</span></div>'
+      +'<div class="rom-info-cell"><span class="ilabel">Paradas</span><span class="ivalue">'+(d.parada||d.pacotes||'—')+'</span></div>'
+      +'<div class="rom-info-cell"><span class="ilabel">Vaga / Área</span><span class="ivalue">'+(d.doca||'—')+' / '+(d.area||'—')+'</span></div>'
+      +'<div class="rom-info-cell">AS DEVOLUÇÕES DOS PACOTES DEVEM OCORRER NO MESMO DIA ATÉ AS 22:00</div>'
+      +'</div>';
+    html+='<table class="rom-table"><thead><tr>'
+      +'<th style="width:8mm">Parada</th>'
+      +'<th style="width:32mm">Shipment</th>'
+      +'<th style="width:40mm">Bairro</th>'
+      +'<th style="width:30mm">Cidade</th>'
+      +'<th>CEP</th>'
+      +'</tr></thead><tbody>';
+    if(linhas.length){
+      linhas.forEach(function(p){
+        html+='<tr><td>'+e(p.parada)+'</td><td>'+e(p.shipment_id)+'</td><td>'+e(p.bairro)+'</td><td>'+e(p.cidade)+'</td><td>'+e(p.cep)+'</td></tr>';
+      });
+    } else {
+      html+='<tr><td colspan="5" style="text-align:center;color:#999;padding:3mm">Sem pacotes.</td></tr>';
+    }
+    html+='</tbody></table></div>';
+  });
+  document.getElementById('print-area').innerHTML=html;
+  setTimeout(function(){ window.print(); },300);
+}
+
+window.addEventListener('load', iniciar);
+</script>
+</body>
+</html>

@@ -1,62 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <base target="_top">
-  <meta charset="UTF-8">
-  <style>
-    * { box-sizing:border-box; margin:0; padding:0; }
-    body { font-family:'Segoe UI',sans-serif; background:#f0f2f5; }
-    header { background:linear-gradient(90deg,#1a1a2e,#0f3460); color:#fff; padding:16px 28px; display:flex; align-items:center; justify-content:space-between; }
-    header h1 { font-size:1.1rem; }
-    .btn-back   { background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:6px 14px; border-radius:6px; cursor:pointer; font-size:0.82rem; }
-    .btn-reload { background:#0f766e; color:#fff; border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-size:0.82rem; font-weight:600; }
-    .toolbar { padding:16px 28px; background:#fff; border-bottom:1px solid #e0e0e0; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .toolbar input { padding:8px 12px; border:1.5px solid #ddd; border-radius:7px; font-size:0.88rem; flex:1; min-width:200px; }
-    .btn { padding:8px 18px; border-radius:7px; border:none; cursor:pointer; font-size:0.88rem; font-weight:600; }
-    .btn-blue { background:#0f3460; color:#fff; }
-    .wrapper { padding:20px 28px; }
-    table { width:100%; border-collapse:collapse; font-size:0.88rem; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.07); }
-    thead { background:#1a1a2e; color:#fff; }
-    thead th { padding:12px 14px; text-align:left; font-weight:600; }
-    tbody tr:nth-child(even) { background:#f9f9f9; }
-    tbody tr:hover { background:#e8f0fe; }
-    tbody td { padding:10px 14px; border-bottom:1px solid #f0f0f0; }
-    .badge { display:inline-block; padding:3px 10px; border-radius:10px; font-size:0.78rem; font-weight:600; }
-    .badge-Admin        { background:#f3e8ff; color:#6b21a8; }
-    .badge-LM           { background:#e3f2fd; color:#1565c0; }
-    .badge-Transportadora { background:#e8f5e9; color:#2e7d32; }
-    .badge-Operacao     { background:#fff3e0; color:#e65100; }
-    .btn-excluir { background:#ffebee; color:#c62828; border:none; padding:5px 12px; border-radius:6px; cursor:pointer; font-size:0.82rem; font-weight:600; }
-    .btn-editar  { background:#e3f2fd; color:#1565c0; border:none; padding:5px 12px; border-radius:6px; cursor:pointer; font-size:0.82rem; font-weight:600; margin-right:6px; }
-    .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:100; align-items:center; justify-content:center; }
-    .modal-bg.show { display:flex; }
-    .modal { background:#fff; border-radius:14px; padding:36px 32px; width:420px; max-width:95vw; }
-    .modal h3 { margin-bottom:20px; color:#1a1a2e; }
-    .modal label { font-size:0.85rem; font-weight:600; color:#555; display:block; margin-bottom:4px; }
-    .modal input, .modal select { width:100%; padding:10px 12px; border:1.5px solid #ddd; border-radius:7px; font-size:0.9rem; margin-bottom:14px; }
-    .senha-hint { font-size:0.76rem; color:#aaa; margin-top:-10px; margin-bottom:12px; }
-    .modal-btns { display:flex; gap:10px; }
-    .modal-btns button { flex:1; padding:11px; border-radius:7px; border:none; cursor:pointer; font-weight:600; }
-    .btn-confirm { background:#0f3460; color:#fff; }
-    .btn-cancel  { background:#eee; color:#555; }
-    .msg { padding:10px 16px; border-radius:7px; margin:10px 28px 0; font-size:0.88rem; display:none; }
-    .msg.ok  { background:#e8f5e9; color:#2e7d32; display:block; }
-    .msg.err { background:#ffebee; color:#c62828; display:block; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Usuários — Painel Last Mile</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',sans-serif;background:#f0f2f5}
+  header{background:#FFE600;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  header h1{font-size:1.1rem;font-weight:800;color:#333}
+  .btn-back{background:#333;color:#FFE600;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:0.82rem;font-weight:700}
+  .btn-reload{background:#0f766e;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:0.82rem;font-weight:600}
+  .toolbar{padding:16px 28px;background:#fff;border-bottom:1px solid #e0e0e0;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .toolbar input{padding:8px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:0.88rem;flex:1;min-width:200px}
+  .toolbar input:focus{outline:none;border-color:#FFE600}
+  .btn{padding:8px 18px;border-radius:7px;border:none;cursor:pointer;font-size:0.88rem;font-weight:600}
+  .btn-blue{background:#333;color:#FFE600}
+  .btn-blue:hover{background:#111}
+  .wrapper{padding:20px 28px}
+  table{width:100%;border-collapse:collapse;font-size:0.88rem;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.07)}
+  thead{background:#333;color:#FFE600}
+  thead th{padding:12px 14px;text-align:left;font-weight:600}
+  tbody tr:nth-child(even){background:#f9f9f9}
+  tbody tr:hover{background:#fffbeb}
+  tbody td{padding:10px 14px;border-bottom:1px solid #f0f0f0}
+  .badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:0.78rem;font-weight:600}
+  .badge-Admin{background:#f3e8ff;color:#6b21a8}
+  .badge-LM{background:#dbeafe;color:#1e40af}
+  .badge-Transportadora{background:#dcfce7;color:#166534}
+  .badge-Operacao{background:#fff7ed;color:#c2410c}
+  .btn-excluir{background:#fee2e2;color:#991b1b;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:0.82rem;font-weight:600}
+  .btn-editar{background:#fffbeb;color:#333;border:1px solid #FFE600;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:0.82rem;font-weight:600;margin-right:6px}
+  .btn-excluir:hover{background:#991b1b;color:#fff}
+  .btn-editar:hover{background:#FFE600}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+  .modal-bg.show{display:flex}
+  .modal{background:#fff;border-radius:14px;padding:36px 32px;width:420px;max-width:95vw}
+  .modal h3{margin-bottom:20px;color:#333;font-size:1rem}
+  .modal label{font-size:0.85rem;font-weight:600;color:#555;display:block;margin-bottom:4px}
+  .modal input,.modal select{width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:7px;font-size:0.9rem;margin-bottom:14px}
+  .modal input:focus,.modal select:focus{outline:none;border-color:#FFE600}
+  .senha-hint{font-size:0.76rem;color:#aaa;margin-top:-10px;margin-bottom:12px}
+  .modal-btns{display:flex;gap:10px}
+  .modal-btns button{flex:1;padding:11px;border-radius:7px;border:none;cursor:pointer;font-weight:600;font-size:0.88rem}
+  .btn-confirm{background:#FFE600;color:#333}
+  .btn-confirm:hover{filter:brightness(.95)}
+  .btn-cancel{background:#eee;color:#555}
+  .msg{padding:10px 16px;border-radius:7px;margin:10px 28px 0;font-size:0.88rem;display:none}
+  .msg.ok{background:#dcfce7;color:#166534;display:block}
+  .msg.err{background:#fee2e2;color:#991b1b;display:block}
+  #loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
+  #loading.on{display:flex}
+  .spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,.3);border-top-color:#FFE600;border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
 </head>
 <body>
+<div id="loading"><div class="spinner"></div></div>
 
 <header>
   <h1>👥 Usuários</h1>
-  <div style="display:flex;gap:8px;align-items:center;">
+  <div style="display:flex;gap:8px;align-items:center">
     <button class="btn-reload" onclick="recarregar()">🔄 Atualizar</button>
-    <button class="btn-back"   onclick="voltar()">← Home</button>
+    <button class="btn-back"   onclick="voltar()">🏠 Home</button>
   </div>
 </header>
 
 <div class="toolbar">
   <input type="text" id="filtro" placeholder="🔍 Filtrar usuários..." oninput="filtrar()" />
-  <button class="btn btn-blue" onclick="abrirModal(false)">+ Novo Usuário</button>
+  <button class="btn btn-blue" onclick="abrirModal(false)">➕ Novo Usuário</button>
 </div>
 
 <div id="msgGlobal" class="msg"></div>
@@ -66,7 +78,9 @@
     <thead>
       <tr><th>Email</th><th>Grupo</th><th>Transportadora</th><th>Ações</th></tr>
     </thead>
-    <tbody id="tbody"></tbody>
+    <tbody id="tbody">
+      <tr><td colspan="4" style="text-align:center;color:#aaa;padding:20px">Carregando...</td></tr>
+    </tbody>
   </table>
 </div>
 
@@ -74,7 +88,7 @@
   <div class="modal">
     <h3 id="modalTitulo">👤 Novo Usuário</h3>
     <label>Email</label>
-    <input id="u_email" type="email" placeholder="email@mercadolivre.com" />
+    <input id="u_email" type="email" placeholder="email@exemplo.com" />
     <label>Senha</label>
     <input id="u_senha" type="password" placeholder="••••••••" />
     <p class="senha-hint" id="senhaHint"></p>
@@ -90,158 +104,134 @@
       <select id="u_transp"></select>
     </div>
     <div class="modal-btns">
-      <button class="btn-confirm" onclick="salvarUsuario()">Salvar</button>
+      <button class="btn-confirm" onclick="salvarUsuario()">💾 Salvar</button>
       <button class="btn-cancel"  onclick="fecharModal()">Cancelar</button>
     </div>
   </div>
 </div>
 
 <script>
-(function() {
-  var USUARIO_JSON = '<?= usuarioInjetado ?>';
-  var usuario = null;
-  try { usuario = JSON.parse(USUARIO_JSON); } catch(e) {}
-  if (!usuario || !usuario.email) {
-    try {
-      var sessao = sessionStorage.getItem('usuario_lm');
-      if (sessao) { usuario = JSON.parse(sessao); USUARIO_JSON = sessao; }
-    } catch(e) {}
-  }
+var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
+var usuario = null;
+try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
+if (!usuario || !usuario.email) { window.location.href='index.html'; }
 
-  // Acesso permitido apenas para Admin
-  if (!usuario || usuario.grupo !== 'Admin') {
-    document.body.innerHTML = '<div style="padding:40px;font-family:sans-serif;color:#c62828;font-size:1.1rem;">Acesso restrito ao perfil Admin.</div>';
+if (usuario && usuario.grupo !== 'Admin') {
+  document.body.innerHTML='<div style="padding:40px;font-family:sans-serif;color:#991b1b;font-size:1.1rem;">⛔ Acesso restrito ao perfil Admin.</div>';
+}
+
+function api(params){ return fetch(API,{method:'POST',body:JSON.stringify(params)}).then(function(r){return r.json();}); }
+function voltar(){ window.location.href='home.html'; }
+function loading(s){ var el=document.getElementById('loading'); s?el.classList.add('on'):el.classList.remove('on'); }
+function mostrarMsg(msg,ok){ var el=document.getElementById('msgGlobal'); el.textContent=msg; el.className='msg '+(ok?'ok':'err'); setTimeout(function(){ el.className='msg'; },4000); }
+
+function recarregar(){ carregarUsuarios(); }
+
+function carregarUsuarios(){
+  loading(true);
+  api({action:'listarUsuarios'}).then(function(res){
+    loading(false);
+    renderTabela(res.data||res||[]);
+  }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
+}
+
+function renderTabela(dados){
+  var tbody=document.getElementById('tbody');
+  if(!dados||!dados.length){
+    tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:#aaa;padding:20px">Nenhum usuário cadastrado.</td></tr>';
     return;
   }
-
-  function navegar(pagina, usuarioJson) {
-    google.script.run
-      .withSuccessHandler(function(html) { document.open(); document.write(html); document.close(); })
-      .getPageComUsuario(pagina, usuarioJson || '');
-  }
-  function voltar()    { navegar('home', USUARIO_JSON); }
-  function recarregar(){ carregarUsuarios(); }
-
-  function carregarUsuarios() {
-    google.script.run.withSuccessHandler(renderTabela).listarUsuarios();
-  }
-
-  function renderTabela(dados) {
-    var tbody = document.getElementById('tbody');
-    tbody.innerHTML = '';
-    if (!dados || dados.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:20px;">Nenhum usuário cadastrado.</td></tr>';
-      return;
-    }
-    dados.forEach(function(u) {
-      var tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td>'+u.email+'</td>'+
-        '<td><span class="badge badge-'+u.grupo+'">'+u.grupo+'</span></td>'+
-        '<td>'+(u.transportadora||'—')+'</td>'+
-        '<td>'+
-          '<button class="btn-editar"  onclick="editarUsuario(\''+u.email+'\',\''+u.grupo+'\',\''+(u.transportadora||'')+'\')">✏️ Editar</button>'+
-          '<button class="btn-excluir" onclick="excluir(\''+u.email+'\')">🗑 Excluir</button>'+
-        '</td>';
-      tbody.appendChild(tr);
-    });
-  }
-
-  function filtrar() {
-    var f = document.getElementById('filtro').value.toLowerCase();
-    document.querySelectorAll('#tbody tr').forEach(function(tr){
-      tr.style.display = tr.innerText.toLowerCase().indexOf(f) > -1 ? '' : 'none';
-    });
-  }
-
-  function abrirModal(isEdit) {
-    document.getElementById('modalTitulo').innerText = isEdit ? '✏️ Editar Usuário' : '👤 Novo Usuário';
-    document.getElementById('senhaHint').innerText   = isEdit ? 'Deixe em branco para manter a senha atual.' : '';
-    if (!isEdit) {
-      document.getElementById('u_email').value    = '';
-      document.getElementById('u_email').disabled = false;
-      document.getElementById('u_senha').value    = '';
-      document.getElementById('u_grupo').value    = 'LM';
-      toggleTransp();
-    }
-    document.getElementById('modal').classList.add('show');
-  }
-
-  function editarUsuario(email, grupo, transp) {
-    document.getElementById('u_email').value    = email;
-    document.getElementById('u_email').disabled = true;
-    document.getElementById('u_senha').value    = '';
-    document.getElementById('u_grupo').value    = grupo;
-    toggleTransp();
-    if (transp && transp !== 'undefined') {
-      setTimeout(function(){ document.getElementById('u_transp').value = transp; }, 50);
-    }
-    abrirModal(true);
-  }
-
-  function fecharModal() {
-    document.getElementById('modal').classList.remove('show');
-    document.getElementById('u_email').disabled = false;
-  }
-
-  function toggleTransp() {
-    var g = document.getElementById('u_grupo').value;
-    document.getElementById('transpDiv').style.display = g === 'Transportadora' ? 'block' : 'none';
-  }
-
-  function salvarUsuario() {
-    var email  = document.getElementById('u_email').value.trim();
-    var senha  = document.getElementById('u_senha').value;
-    var grupo  = document.getElementById('u_grupo').value;
-    var transp = grupo === 'Transportadora' ? document.getElementById('u_transp').value : '';
-    if (!email) { alert('Informe o email.'); return; }
-    google.script.run
-      .withSuccessHandler(function(res) {
-        fecharModal();
-        mostrarMsg(res.msg, res.ok);
-        if (res.ok) carregarUsuarios();
-      })
-      .salvarUsuario(email, senha, grupo, transp);
-  }
-
-  function excluir(email) {
-    if (!confirm('Excluir o usuário '+email+'?')) return;
-    google.script.run
-      .withSuccessHandler(function(res) {
-        mostrarMsg(res.ok ? 'Usuário excluído.' : 'Erro ao excluir.', res.ok);
-        if (res.ok) carregarUsuarios();
-      })
-      .excluirUsuario(email);
-  }
-
-  function mostrarMsg(msg, ok) {
-    var el = document.getElementById('msgGlobal');
-    el.innerText = msg;
-    el.className = 'msg '+(ok?'ok':'err');
-    setTimeout(function(){ el.className = 'msg'; }, 4000);
-  }
-
-  window.filtrar       = filtrar;
-  window.recarregar    = recarregar;
-  window.abrirModal    = abrirModal;
-  window.editarUsuario = editarUsuario;
-  window.fecharModal   = fecharModal;
-  window.toggleTransp  = toggleTransp;
-  window.salvarUsuario = salvarUsuario;
-  window.excluir       = excluir;
-  window.voltar        = voltar;
-
-  window.addEventListener('load', function() {
-    carregarUsuarios();
-    google.script.run
-      .withSuccessHandler(function(lista) {
-        var sel = document.getElementById('u_transp');
-        sel.innerHTML = lista.map(function(t){ return '<option>'+t+'</option>'; }).join('');
-      })
-      .listarTransportadoras();
+  var html='';
+  dados.forEach(function(u){
+    html+='<tr>'
+      +'<td>'+e(u.email)+'</td>'
+      +'<td><span class="badge badge-'+e(u.grupo)+'">'+e(u.grupo)+'</span></td>'
+      +'<td>'+(u.transportadora||'—')+'</td>'
+      +'<td>'
+        +'<button class="btn-editar" onclick="editarUsuario(\''+e(u.email)+'\',\''+e(u.grupo)+'\',\''+(u.transportadora||'')+'\')">✏️ Editar</button>'
+        +'<button class="btn-excluir" onclick="excluir(\''+e(u.email)+'\')">🗑️ Excluir</button>'
+      +'</td>'
+    +'</tr>';
   });
+  tbody.innerHTML=html;
+}
 
-})();
+function filtrar(){
+  var f=document.getElementById('filtro').value.toLowerCase();
+  document.querySelectorAll('#tbody tr').forEach(function(tr){
+    tr.style.display=tr.innerText.toLowerCase().indexOf(f)>-1?'':'none';
+  });
+}
+
+function abrirModal(isEdit){
+  document.getElementById('modalTitulo').textContent=isEdit?'✏️ Editar Usuário':'👤 Novo Usuário';
+  document.getElementById('senhaHint').textContent=isEdit?'Deixe em branco para manter a senha atual.':'';
+  if(!isEdit){
+    document.getElementById('u_email').value='';
+    document.getElementById('u_email').disabled=false;
+    document.getElementById('u_senha').value='';
+    document.getElementById('u_grupo').value='LM';
+    toggleTransp();
+  }
+  document.getElementById('modal').classList.add('show');
+}
+
+function editarUsuario(email,grupo,transp){
+  document.getElementById('u_email').value=email;
+  document.getElementById('u_email').disabled=true;
+  document.getElementById('u_senha').value='';
+  document.getElementById('u_grupo').value=grupo;
+  toggleTransp();
+  if(transp&&transp!=='undefined'){
+    setTimeout(function(){ document.getElementById('u_transp').value=transp; },50);
+  }
+  abrirModal(true);
+}
+
+function fecharModal(){
+  document.getElementById('modal').classList.remove('show');
+  document.getElementById('u_email').disabled=false;
+}
+
+function toggleTransp(){
+  var g=document.getElementById('u_grupo').value;
+  document.getElementById('transpDiv').style.display=g==='Transportadora'?'block':'none';
+}
+
+function salvarUsuario(){
+  var email=document.getElementById('u_email').value.trim();
+  var senha=document.getElementById('u_senha').value;
+  var grupo=document.getElementById('u_grupo').value;
+  var transp=grupo==='Transportadora'?document.getElementById('u_transp').value:'';
+  if(!email){ alert('Informe o email.'); return; }
+  loading(true);
+  api({action:'salvarUsuario', email:email, senha:senha, grupo:grupo, transportadora:transp}).then(function(res){
+    loading(false); fecharModal();
+    mostrarMsg(res.msg||(res.ok?'Salvo!':'Erro'),res.ok);
+    if(res.ok) carregarUsuarios();
+  }).catch(function(er){ loading(false); mostrarMsg('Erro: '+er.message,false); });
+}
+
+function excluir(email){
+  if(!confirm('Excluir o usuário '+email+'?')) return;
+  loading(true);
+  api({action:'excluirUsuario', email:email}).then(function(res){
+    loading(false);
+    mostrarMsg(res.ok?'✅ Usuário excluído.':'❌ Erro ao excluir.',res.ok);
+    if(res.ok) carregarUsuarios();
+  }).catch(function(er){ loading(false); mostrarMsg('Erro: '+er.message,false); });
+}
+
+function e(v){ if(v===null||v===undefined)return''; return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+window.addEventListener('load', function(){
+  carregarUsuarios();
+  api({action:'listarTransportadoras'}).then(function(res){
+    var lista=res.data||[];
+    var sel=document.getElementById('u_transp');
+    sel.innerHTML=lista.map(function(t){ return '<option value="'+t+'">'+t+'</option>'; }).join('');
+  });
+});
 </script>
 </body>
 </html>

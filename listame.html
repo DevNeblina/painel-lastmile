@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lista ME — Painel Last Mile</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:12px}
+  #header{position:sticky;top:0;z-index:100;background:#FFE600;padding:10px 14px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;border-bottom:2px solid #333;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  #header h1{font-size:14px;color:#333;font-weight:700;margin-right:6px;white-space:nowrap}
+  .btn{padding:6px 11px;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;transition:opacity .15s;white-space:nowrap}
+  .btn:hover{opacity:.85}
+  .b-home{background:#333;color:#FFE600}
+  .b-reload{background:#0f766e;color:#fff}
+  .b-upload{background:#7c3aed;color:#fff}
+  .b-print{background:#dc2626;color:#fff}
+  .b-cancel{background:#6b7280;color:#fff}
+  .b-processar{background:#7c3aed;color:#fff}
+  .filtros{background:#fff;padding:10px 14px;border-bottom:1px solid #eee;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+  .fg{display:flex;flex-direction:column;gap:3px}
+  .fg label{font-size:10px;font-weight:700;color:#555;text-transform:uppercase}
+  .fg select,.fg input{padding:5px 7px;border:1.5px solid #ddd;border-radius:5px;font-size:11px;min-width:130px}
+  .fg select:focus,.fg input:focus{outline:none;border-color:#FFE600}
+  #stats{padding:8px 14px;background:#fff;border-bottom:1px solid #eee;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .stat{background:#f8f9fb;border:1px solid #e2e8f0;border-radius:7px;padding:6px 12px;text-align:center;min-width:90px}
+  .stat-v{font-size:1.2rem;font-weight:700;color:#333}
+  .stat-l{font-size:10px;color:#64748b;margin-top:1px}
+  #conteudo{padding:10px 14px 60px}
+  .lista-bloco{background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .lista-header{background:#333;color:#FFE600;padding:8px 14px;display:flex;align-items:center;justify-content:space-between}
+  .lista-header h3{font-size:12px;font-weight:700}
+  .lista-badge{font-size:10px;background:rgba(255,255,255,.2);padding:2px 8px;border-radius:10px}
+  .lista-badge.aleatorio{background:#dc2626}
+  table.lista-table{width:100%;border-collapse:collapse;font-size:11px}
+  table.lista-table th{background:#f1f5f9;color:#374151;padding:7px 10px;text-align:left;font-size:10px;font-weight:700;border-bottom:1px solid #e2e8f0}
+  table.lista-table td{padding:6px 10px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+  table.lista-table tr:last-child td{border-bottom:none}
+  table.lista-table tr:hover td{background:#fffbeb}
+  table.lista-table tr.carregou td{background:#f0fdf4 !important;opacity:.75}
+  table.lista-table tr.carregou td span.nome-driver{text-decoration:line-through;color:#aaa}
+  table.lista-table tr.recusou td{background:#fff1f2 !important;opacity:.75}
+  table.lista-table tr.recusou td span.nome-driver{text-decoration:line-through;color:#aaa}
+  .badge-alea{background:#fff1f2;color:#be123c;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700}
+  .badge-rota{background:#f0fdf4;color:#15803d;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700}
+  .badge-carregou{background:#16a34a;color:#fff;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700}
+  .badge-recusou{background:#dc2626;color:#fff;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700}
+  .btn-status{padding:3px 8px;border:none;border-radius:5px;cursor:pointer;font-size:10px;font-weight:700;margin-right:3px}
+  .btn-carregou{background:#dcfce7;color:#16a34a}
+  .btn-carregou:hover{background:#16a34a;color:#fff}
+  .btn-recusou{background:#fee2e2;color:#dc2626}
+  .btn-recusou:hover{background:#dc2626;color:#fff}
+  .btn-desfazer{background:#f1f5f9;color:#64748b}
+  .btn-desfazer:hover{background:#64748b;color:#fff}
+  #upload-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:center;justify-content:center;padding:16px}
+  #upload-modal.on{display:flex}
+  .modal-box{background:#fff;border-radius:12px;padding:24px;max-width:480px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+  .modal-box h3{font-size:14px;color:#333;font-weight:700;margin-bottom:16px}
+  .modal-box label{font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px}
+  .modal-box select{width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:12px;margin-bottom:12px}
+  .modal-box select:focus{outline:none;border-color:#FFE600}
+  .drop-area{border:2px dashed #cbd5e1;border-radius:8px;padding:32px 16px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:12px}
+  .drop-area:hover,.drop-area.over{border-color:#FFE600;background:#fffbeb}
+  .drop-area input[type=file]{display:none}
+  .modal-footer-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+  #loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
+  #loading.on{display:flex}
+  .spin{width:44px;height:44px;border:4px solid #ddd;border-top-color:#FFE600;border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #toasts{position:fixed;bottom:16px;right:16px;z-index:9998;display:flex;flex-direction:column;gap:6px}
+  .tst{padding:9px 16px;border-radius:7px;color:#fff;font-size:12px;font-weight:600;box-shadow:0 3px 10px rgba(0,0,0,.3);animation:tin .2s ease}
+  .tst.ok{background:#16a34a}.tst.err{background:#dc2626}.tst.inf{background:#0369a1}
+  @keyframes tin{from{transform:translateX(80px);opacity:0}to{transform:translateX(0);opacity:1}}
+  #print-area{display:none}
+  @media print{
+    body > *:not(#print-area){display:none !important}
+    #print-area{display:block !important}
+    .print-lista{page-break-after:always;padding:8mm;font-family:Arial,sans-serif;font-size:9pt}
+    .print-lista:last-child{page-break-after:auto}
+    .print-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4mm;border-bottom:2px solid #000;padding-bottom:3mm}
+    .print-header h2{font-size:13pt;font-weight:900}
+    .print-header span{font-size:9pt;color:#555}
+    .print-table{width:100%;border-collapse:collapse;font-size:8pt}
+    .print-table th{background:#000;color:#fff;padding:2mm 3mm;text-align:left;font-weight:700}
+    .print-table td{padding:1.5mm 3mm;border-bottom:0.5px solid #ccc}
+    .print-table tr:nth-child(even) td{background:#f5f5f5}
+    @page{size:A4 portrait;margin:8mm}
+  }
+</style>
+</head>
+<body>
+<div id="loading"><div class="spin"></div></div>
+<div id="toasts"></div>
+<div id="print-area"></div>
+
+<div id="header">
+  <h1>📋 Lista ME</h1>
+  <button class="btn b-home"   onclick="voltar()">🏠 Home</button>
+  <button class="btn b-reload" onclick="recarregar()">🔄 Atualizar</button>
+  <button class="btn b-upload" onclick="abrirUpload()">⬆️ Upload CSV</button>
+  <button class="btn b-print"  onclick="imprimir()">🖨️ Imprimir</button>
+</div>
+
+<div class="filtros">
+  <div class="fg"><label>Ciclo</label>
+    <select id="f-ciclo" onchange="trocarCiclo()">
+      <option value="AM">AM</option>
+      <option value="PM">PM</option>
+      <option value="SD">SD</option>
+      <option value="EXTRA">EXTRA</option>
+    </select>
+  </div>
+  <div class="fg"><label>Lista</label><select id="f-lista" onchange="renderListas()"><option value="">Todas</option></select></div>
+  <div class="fg"><label>Tipo</label>
+    <select id="f-tipo" onchange="renderListas()">
+      <option value="">Todos</option>
+      <option value="rota">Com Rota</option>
+      <option value="aleatorio">Aleatório</option>
+    </select>
+  </div>
+  <div class="fg"><label>Nome</label><input id="f-nome" oninput="renderListas()" placeholder="Buscar nome..."></div>
+  <div class="fg"><label>Placa</label><input id="f-placa" oninput="renderListas()" placeholder="Buscar placa..."></div>
+  <div class="fg"><label>Rota</label><input id="f-rota" oninput="renderListas()" placeholder="Buscar rota..."></div>
+</div>
+
+<div id="stats">
+  <div class="stat"><div class="stat-v" id="s-total">0</div><div class="stat-l">Total</div></div>
+  <div class="stat"><div class="stat-v" id="s-rota">0</div><div class="stat-l">Com rota</div></div>
+  <div class="stat"><div class="stat-v" id="s-alea">0</div><div class="stat-l">Aleatórios</div></div>
+  <div class="stat"><div class="stat-v" id="s-listas">0</div><div class="stat-l">Listas</div></div>
+  <div class="stat"><div class="stat-v" id="s-carregou" style="color:#16a34a">0</div><div class="stat-l">Carregaram</div></div>
+  <div class="stat"><div class="stat-v" id="s-recusou" style="color:#dc2626">0</div><div class="stat-l">Recusaram</div></div>
+</div>
+
+<div id="conteudo"></div>
+
+<div id="upload-modal">
+  <div class="modal-box">
+    <h3>⬆️ Upload CSV — Envios Extra</h3>
+    <label>Ciclo</label>
+    <select id="upload-ciclo">
+      <option value="AM">AM</option>
+      <option value="PM">PM</option>
+      <option value="SD">SD</option>
+      <option value="EXTRA">EXTRA</option>
+    </select>
+    <label>Arquivo CSV</label>
+    <div class="drop-area" id="drop-area" onclick="document.getElementById('file-input').click()">
+      <div style="font-size:24px">📂</div>
+      <p id="drop-text">Clique ou arraste o arquivo CSV aqui</p>
+      <input type="file" id="file-input" accept=".csv,.txt" onchange="onFileSelect(event)">
+    </div>
+    <div class="modal-footer-btns">
+      <button class="btn b-cancel"    onclick="fecharUpload()">Cancelar</button>
+      <button class="btn b-processar" onclick="processarCSV()">⚙️ Processar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
+var usuario = null;
+try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
+if (!usuario || !usuario.email) { window.location.href='index.html'; }
+
+var dados=[], statusMap={}, cicloAtual='AM', csvTexto='';
+
+function api(params){ return fetch(API,{method:'POST',body:JSON.stringify(params)}).then(function(r){return r.json();}); }
+function voltar(){ window.location.href='home.html'; }
+function recarregar(){ carregarLista(cicloAtual); }
+function loading(s){ var el=document.getElementById('loading'); s?el.classList.add('on'):el.classList.remove('on'); }
+function toast(msg,tipo){ var c=document.getElementById('toasts'); var el=document.createElement('div'); el.className='tst '+(tipo||'inf'); el.textContent=msg; c.appendChild(el); setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},4000); }
+function e(v){ if(v===null||v===undefined)return''; return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function trocarCiclo(){ cicloAtual=document.getElementById('f-ciclo').value; statusMap={}; carregarLista(cicloAtual); }
+
+function carregarLista(ciclo){
+  loading(true);
+  Promise.all([
+    api({action:'getListaME', ciclo:ciclo}),
+    api({action:'getStatusMotoristas', ciclo:ciclo})
+  ]).then(function(res){
+    dados=res[0].data||res[0]||[];
+    statusMap=res[1].data||res[1]||{};
+    popularFiltroLista();
+    atualizarStats();
+    renderListas();
+    loading(false);
+  }).catch(function(er){ loading(false); toast('Erro: '+er.message,'err'); });
+}
+
+function popularFiltroLista(){
+  var sel=document.getElementById('f-lista'); var vis={};
+  sel.innerHTML='<option value="">Todas</option>';
+  dados.forEach(function(d){ var l=String(d.lista||''); if(l&&!vis[l]){ vis[l]=true; var o=document.createElement('option'); o.value=l; o.textContent='Lista '+l; sel.appendChild(o); } });
+}
+
+function atualizarStats(){
+  var comRota=dados.filter(function(d){ return d.tipo==='rota'; }).length;
+  var alea=dados.filter(function(d){ return d.tipo==='aleatorio'; }).length;
+  var listas={};
+  dados.forEach(function(d){ if(d.lista) listas[d.lista]=true; });
+  var carregou=Object.keys(statusMap).filter(function(k){ return statusMap[k]==='carregou'; }).length;
+  var recusou=Object.keys(statusMap).filter(function(k){ return statusMap[k]==='recusou'; }).length;
+  document.getElementById('s-total').textContent=dados.length;
+  document.getElementById('s-rota').textContent=comRota;
+  document.getElementById('s-alea').textContent=alea;
+  document.getElementById('s-listas').textContent=Object.keys(listas).length;
+  document.getElementById('s-carregou').textContent=carregou;
+  document.getElementById('s-recusou').textContent=recusou;
+}
+
+function renderListas(){
+  var fL=document.getElementById('f-lista').value;
+  var fT=document.getElementById('f-tipo').value;
+  var fN=(document.getElementById('f-nome').value||'').toLowerCase().trim();
+  var fP=(document.getElementById('f-placa').value||'').toLowerCase().trim();
+  var fR=(document.getElementById('f-rota').value||'').toLowerCase().trim();
+  var filtrado=dados.filter(function(d){
+    if(fL&&String(d.lista)!==fL) return false;
+    if(fT&&d.tipo!==fT) return false;
+    if(fN&&String(d.nome||'').toLowerCase().indexOf(fN)===-1) return false;
+    if(fP&&String(d.placa||'').toLowerCase().indexOf(fP)===-1) return false;
+    if(fR&&String(d.rota||'').toLowerCase().indexOf(fR)===-1) return false;
+    return true;
+  });
+  var grupos={};
+  filtrado.forEach(function(d){ var l=String(d.lista||'?'); if(!grupos[l])grupos[l]=[]; grupos[l].push(d); });
+  var conteudo=document.getElementById('conteudo');
+  if(!filtrado.length){ conteudo.innerHTML='<div style="padding:24px;text-align:center;color:#aaa">Nenhum motorista encontrado.</div>'; return; }
+  var html='';
+  var numeros=Object.keys(grupos).sort(function(a,b){ return parseInt(a)-parseInt(b); });
+  numeros.forEach(function(num){
+    var grupo=grupos[num];
+    var temAlea=grupo.some(function(d){ return d.tipo==='aleatorio'; });
+    html+='<div class="lista-bloco">';
+    html+='<div class="lista-header"><h3>Lista '+num+(temAlea?' — Aleatórios':'')+'</h3><span class="lista-badge'+(temAlea?' aleatorio':'')+'">'+grupo.length+' motoristas</span></div>';
+    html+='<table class="lista-table"><thead><tr><th>#</th><th>Nome</th><th>Placa</th><th>Rota</th><th>Giro</th><th>Tipo</th><th>Status</th></tr></thead><tbody>';
+    grupo.forEach(function(d,i){
+      var status=statusMap[d.placa]||'';
+      var trClass=status?' class="'+status+'"':'';
+      var tipoHtml=d.tipo==='aleatorio'?'<span class="badge-alea">Aleatório</span>':'<span class="badge-rota">Rota</span>';
+      var statusHtml='';
+      if(status==='carregou'){ statusHtml='<span class="badge-carregou">✅ Carregou</span> <button class="btn-status btn-desfazer" onclick="setStatus(\''+d.placa+'\',\'\')">↩</button>'; }
+      else if(status==='recusou'){ statusHtml='<span class="badge-recusou">❌ Recusou</span> <button class="btn-status btn-desfazer" onclick="setStatus(\''+d.placa+'\',\'\')">↩</button>'; }
+      else{ statusHtml='<button class="btn-status btn-carregou" onclick="setStatus(\''+d.placa+'\',\'carregou\')">✅</button><button class="btn-status btn-recusou" onclick="setStatus(\''+d.placa+'\',\'recusou\')">❌</button>'; }
+      html+='<tr'+trClass+'><td>'+(i+1)+'</td><td><span class="nome-driver">'+e(d.nome||'—')+'</span></td><td>'+e(d.placa)+'</td><td>'+e(d.rota||'—')+'</td><td>'+e(d.giro||'—')+'</td><td>'+tipoHtml+'</td><td>'+statusHtml+'</td></tr>';
+    });
+    html+='</tbody></table></div>';
+  });
+  conteudo.innerHTML=html;
+}
+
+function setStatus(placa,status){
+  loading(true);
+  api({action:'salvarStatusMotorista', ciclo:cicloAtual, placa:placa, status:status}).then(function(res){
+    loading(false);
+    if(res.ok){ statusMap[placa]=status; atualizarStats(); renderListas(); toast(status==='carregou'?'✅ Marcado como carregou!':status==='recusou'?'❌ Marcado como recusou!':'↩️ Status removido!','ok'); }
+    else{ toast('Erro: '+(res.msg||'?'),'err'); }
+  }).catch(function(e){ loading(false); toast('Erro: '+e.message,'err'); });
+}
+
+function abrirUpload(){
+  csvTexto='';
+  document.getElementById('drop-text').textContent='Clique ou arraste o arquivo CSV aqui';
+  document.getElementById('file-input').value='';
+  document.getElementById('upload-modal').classList.add('on');
+  var drop=document.getElementById('drop-area');
+  drop.ondragover=function(e){ e.preventDefault(); drop.classList.add('over'); };
+  drop.ondragleave=function(){ drop.classList.remove('over'); };
+  drop.ondrop=function(e){ e.preventDefault(); drop.classList.remove('over'); var file=e.dataTransfer.files[0]; if(file) lerArquivo(file); };
+}
+
+function fecharUpload(){ document.getElementById('upload-modal').classList.remove('on'); }
+
+function onFileSelect(ev){ var file=ev.target.files[0]; if(file) lerArquivo(file); }
+
+function lerArquivo(file){
+  var reader=new FileReader();
+  reader.onload=function(ev){ csvTexto=ev.target.result; document.getElementById('drop-text').textContent='✅ '+file.name+' carregado!'; };
+  reader.readAsText(file,'UTF-8');
+}
+
+function processarCSV(){
+  if(!csvTexto){ toast('Selecione um arquivo CSV.','inf'); return; }
+  var ciclo=document.getElementById('upload-ciclo').value;
+  loading(true);
+  api({action:'processarCSVListaME', ciclo:ciclo, csvText:csvTexto}).then(function(res){
+    loading(false);
+    if(res.ok){
+      fecharUpload();
+      toast('✅ Processado! '+res.total+' motoristas em '+res.listas+' listas.','ok');
+      document.getElementById('f-ciclo').value=ciclo;
+      cicloAtual=ciclo; statusMap={};
+      dados=res.motoristas||[];
+      popularFiltroLista(); atualizarStats(); renderListas();
+    } else { toast('Erro: '+(res.msg||'?'),'err'); }
+  }).catch(function(er){ loading(false); toast('Erro: '+er.message,'err'); });
+}
+
+function imprimir(){
+  var fL=document.getElementById('f-lista').value;
+  var fT=document.getElementById('f-tipo').value;
+  var filtrado=dados.filter(function(d){
+    if(fL&&String(d.lista)!==fL) return false;
+    if(fT&&d.tipo!==fT) return false;
+    return true;
+  });
+  if(!filtrado.length){ toast('Nenhum dado para imprimir.','inf'); return; }
+  var grupos={};
+  filtrado.forEach(function(d){ var l=String(d.lista||'?'); if(!grupos[l])grupos[l]=[]; grupos[l].push(d); });
+  var hoje=new Date();
+  var dataStr=String(hoje.getDate()).padStart(2,'0')+'/'+String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
+  var html='';
+  var numeros=Object.keys(grupos).sort(function(a,b){ return parseInt(a)-parseInt(b); });
+  numeros.forEach(function(num){
+    var grupo=grupos[num];
+    var temAlea=grupo.some(function(d){ return d.tipo==='aleatorio'; });
+    html+='<div class="print-lista">';
+    html+='<div class="print-header"><h2>Lista ME — Lista '+num+(temAlea?' (Aleatórios)':'')+'</h2><span>SSP34 COTIA — '+dataStr+' — Ciclo: '+cicloAtual+'</span></div>';
+    html+='<table class="print-table"><thead><tr><th>#</th><th>Nome</th><th>Placa</th><th>Rota</th><th>Giro</th></tr></thead><tbody>';
+    grupo.forEach(function(d,i){
+      html+='<tr><td>'+(i+1)+'</td><td>'+e(d.nome||'—')+'</td><td>'+e(d.placa)+'</td><td>'+e(d.rota||'Aleatório')+'</td><td>'+e(d.giro||'—')+'</td></tr>';
+    });
+    html+='</tbody></table></div>';
+  });
+  document.getElementById('print-area').innerHTML=html;
+  setTimeout(function(){ window.print(); },300);
+}
+
+window.addEventListener('load', function(){
+  carregarLista(cicloAtual);
+});
+</script>
+</body>
+</html>

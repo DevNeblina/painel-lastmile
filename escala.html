@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Escala — Painel Last Mile</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',sans-serif;background:#f8f9fa;font-size:12px;color:#333}
+    header{background:#FFE600;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+    header h1{font-size:15px;font-weight:800;color:#333}
+    .header-right{display:flex;gap:8px;align-items:center}
+    .btn{padding:7px 14px;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;transition:filter .15s;white-space:nowrap}
+    .btn:hover{filter:brightness(.92)}
+    .btn-home{background:#333;color:#FFE600}
+    .btn-salvar{background:#16a34a;color:#fff}
+    .btn-limpar{background:#dc2626;color:#fff}
+    .btn-xlsx{background:#1d4ed8;color:#fff}
+    .toolbar{padding:10px 16px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .toolbar select,.toolbar input{padding:6px 10px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:12px}
+    .wrapper{padding:16px;overflow-x:auto}
+    table{width:100%;border-collapse:collapse;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06);border-radius:10px;overflow:hidden;min-width:900px}
+    thead th{background:#333;color:#FFE600;padding:10px 12px;font-size:11px;font-weight:700;text-align:left;white-space:nowrap}
+    tbody td{padding:8px 12px;border-bottom:1px solid #f1f5f9;font-size:11px;white-space:nowrap}
+    tbody tr:hover{background:#fffbeb}
+    tbody tr:last-child td{border-bottom:none}
+    select.transp-sel{padding:4px 8px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:11px;background:#fff;min-width:140px}
+    select.transp-sel:focus{outline:none;border-color:#FFE600}
+    .badge{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+    .msg{padding:8px 14px;border-radius:6px;margin:6px 16px;font-size:12px;display:none}
+    .msg.ok{background:#dcfce7;color:#166534;display:block}
+    .msg.err{background:#fee2e2;color:#991b1b;display:block}
+    #loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
+    #loading.on{display:flex}
+    .spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,.3);border-top-color:#FFE600;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;padding:16px}
+    .modal-bg.show{display:flex}
+    .modal{background:#fff;border-radius:12px;padding:24px;width:100%;max-width:700px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+    .modal h3{font-size:14px;font-weight:700;margin-bottom:16px;color:#333}
+    .modal table{min-width:unset}
+    .close-modal{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:#888}
+  </style>
+</head>
+<body>
+<div id="loading"><div class="spinner"></div></div>
+<div id="msgGlobal" class="msg"></div>
+
+<header>
+  <h1>📊 Escala de Carregamento</h1>
+  <div class="header-right">
+    <button class="btn btn-xlsx" onclick="baixarXlsx()">⬇️ Baixar XLSX</button>
+    <button class="btn btn-salvar" onclick="salvar()">💾 Salvar</button>
+    <button class="btn btn-limpar" onclick="limpar()">🗑️ Limpar</button>
+    <button class="btn btn-home" onclick="voltar()">🏠 Home</button>
+  </div>
+</header>
+
+<div class="toolbar">
+  <select id="selCiclo" onchange="trocarCiclo()"><option value="">Carregando...</option></select>
+  <select id="filtroArea" onchange="renderTabela()"><option value="">Todas as Áreas</option></select>
+  <input type="text" id="filtroRota" placeholder="🔍 Buscar rota..." oninput="renderTabela()">
+</div>
+
+<div class="wrapper">
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th>Rota</th><th>Otimizada</th><th>Paradas</th><th>Pacotes</th>
+        <th>Cidade</th><th>Bairro</th><th>Modal</th><th>Ocup/Vol</th>
+        <th>Giro</th><th>Área</th><th>Doca</th><th>Roteiro</th>
+        <th>Transportadora</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"><tr><td colspan="13" style="text-align:center;padding:24px;color:#aaa">Carregando...</td></tr></tbody>
+  </table>
+</div>
+
+<div class="modal-bg" id="modalDetalhe">
+  <div class="modal">
+    <button class="close-modal" onclick="fecharModal()">×</button>
+    <h3 id="modalTitulo">📦 Pacotes da Rota</h3>
+    <div id="modalConteudo"></div>
+  </div>
+</div>
+
+<script>
+  var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
+  var usuario = null;
+  var cicloAtual = 'AM';
+  var dadosEscala = [];
+  var transportadoras = [];
+
+  try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
+  if (!usuario || !usuario.email) { window.location.href='index.html'; }
+
+  function voltar(){ window.location.href='home.html'; }
+  function loading(s){ document.getElementById('loading').className=s?'on':''; }
+  function mostrarMsg(msg,ok){
+    var el=document.getElementById('msgGlobal');
+    el.textContent=msg; el.className='msg '+(ok?'ok':'err');
+    setTimeout(function(){ el.className='msg'; },4000);
+  }
+
+  function api(params){
+    return fetch(API,{method:'POST',body:JSON.stringify(params)}).then(function(r){return r.json();});
+  }
+
+  function iniciar(){
+    loading(true);
+    Promise.all([
+      api({action:'getCiclos'}),
+      api({action:'listarTransportadoras'})
+    ]).then(function(res){
+      var ciclos = res[0].data || [];
+      transportadoras = res[1].data || [];
+      var sel = document.getElementById('selCiclo');
+      sel.innerHTML = '';
+      ciclos.forEach(function(c){
+        var o = document.createElement('option');
+        o.value=c; o.textContent=c; sel.appendChild(o);
+      });
+      cicloAtual = ciclos[0]||'AM';
+      carregarEscala();
+    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
+  }
+
+  function trocarCiclo(){
+    cicloAtual = document.getElementById('selCiclo').value;
+    carregarEscala();
+  }
+
+  function carregarEscala(){
+    loading(true);
+    api({action:'getEscala', ciclo:cicloAtual}).then(function(res){
+      dadosEscala = res.data || [];
+      preencherFiltroArea();
+      renderTabela();
+      loading(false);
+    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
+  }
+
+  function preencherFiltroArea(){
+    var sel = document.getElementById('filtroArea');
+    sel.innerHTML = '<option value="">Todas as Áreas</option>';
+    var areas = {};
+    dadosEscala.forEach(function(d){ if(d.area) areas[d.area]=true; });
+    Object.keys(areas).sort().forEach(function(a){
+      var o=document.createElement('option'); o.value=a; o.textContent=a; sel.appendChild(o);
+    });
+  }
+
+  function renderTabela(){
+    var fArea = document.getElementById('filtroArea').value;
+    var fRota = document.getElementById('filtroRota').value.toLowerCase();
+    var filtrado = dadosEscala.filter(function(d){
+      if(fArea && d.area!==fArea) return false;
+      if(fRota && String(d.rota||'').toLowerCase().indexOf(fRota)===-1 &&
+         String(d.otimizada||'').toLowerCase().indexOf(fRota)===-1) return false;
+      return true;
+    });
+    var html = '';
+    filtrado.forEach(function(d){
+      html += '<tr>'
+        +'<td><a href="#" onclick="verPacotes(\''+e(d.rota)+'\');return false" style="color:#1d4ed8;font-weight:700">'+e(d.rota)+'</a></td>'
+        +'<td>'+e(d.otimizada)+'</td>'
+        +'<td>'+e(d.parada)+'</td>'
+        +'<td>'+e(d.pacotes)+'</td>'
+        +'<td>'+e(d.cidade)+'</td>'
+        +'<td>'+e(d.bairro)+'</td>'
+        +'<td>'+e(d.tipo_veiculo)+'</td>'
+        +'<td>'+e(d.ocup_volumosos)+'</td>'
+        +'<td>'+e(d.giro)+'</td>'
+        +'<td>'+e(d.area)+'</td>'
+        +'<td>'+e(d.doca)+'</td>'
+        +'<td>'+e(d.roteiro)+'</td>'
+        +'<td>'
+          +'<select class="transp-sel" data-rota="'+e(d.rota)+'" onchange="marcarAlterado(this)">'
+          +'<option value="">-- Selecionar --</option>'
+          +transportadoras.map(function(t){
+            return '<option value="'+e(t)+'"'+(d.transportadora===t?' selected':'')+'>'+e(t)+'</option>';
+          }).join('')
+          +'</select>'
+        +'</td>'
+      +'</tr>';
+    });
+    document.getElementById('tbody').innerHTML = html || '<tr><td colspan="13" style="text-align:center;padding:24px;color:#aaa">Nenhuma rota encontrada.</td></tr>';
+  }
+
+  function marcarAlterado(sel){ sel.style.borderColor='#FFE600'; }
+
+  function salvar(){
+    loading(true);
+    var escalaData = [];
+    document.querySelectorAll('.transp-sel').forEach(function(sel){
+      escalaData.push({ rota: sel.dataset.rota, transportadora: sel.value });
+    });
+    api({action:'salvarEscala', ciclo:cicloAtual, escalaData:escalaData}).then(function(res){
+      loading(false);
+      mostrarMsg(res.message||'Salvo!', res.success||res.ok);
+      document.querySelectorAll('.transp-sel').forEach(function(s){ s.style.borderColor=''; });
+    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
+  }
+
+  function limpar(){
+    if(!confirm('Limpar todas as transportadoras salvas?')) return;
+    loading(true);
+    api({action:'salvarEscala', ciclo:cicloAtual, escalaData:[]}).then(function(){
+      carregarEscala();
+    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
+  }
+
+  function verPacotes(rota){
+    loading(true);
+    api({action:'getDetalheRota', ciclo:cicloAtual, rota:rota}).then(function(res){
+      loading(false);
+      var pacotes = res.data || [];
+      document.getElementById('modalTitulo').textContent = '📦 Pacotes da Rota: '+rota;
+      var html = '<table style="width:100%"><thead><tr>'
+        +'<th style="background:#333;color:#FFE600;padding:8px">Parada</th>'
+        +'<th style="background:#333;color:#FFE600;padding:8px">Shipment</th>'
+        +'<th style="background:#333;color:#FFE600;padding:8px">Cidade</th>'
+        +'<th style="background:#333;color:#FFE600;padding:8px">Bairro</th>'
+        +'<th style="background:#333;color:#FFE600;padding:8px">CEP</th>'
+        +'</tr></thead><tbody>';
+      pacotes.forEach(function(p){
+        html += '<tr>'
+          +'<td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">'+e(p.parada)+'</td>'
+          +'<td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">'+e(p.shipment_id)+'</td>'
+          +'<td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">'+e(p.cidade)+'</td>'
+          +'<td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">'+e(p.bairro)+'</td>'
+          +'<td style="padding:6px 8px;border-bottom:1px solid #f1f5f9">'+e(p.cep)+'</td>'
+        +'</tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('modalConteudo').innerHTML = html;
+      document.getElementById('modalDetalhe').className='modal-bg show';
+    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
+  }
+
+  function fecharModal(){ document.getElementById('modalDetalhe').className='modal-bg'; }
+
+  function baixarXlsx(){
+    mostrarMsg('⬇️ Use o botão no sistema original para baixar o XLSX.',true);
+  }
+
+  function e(v){
+    if(v===null||v===undefined)return'';
+    return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  iniciar();
+</script>
+</body>
+</html>

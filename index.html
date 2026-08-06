@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel Last Mile SSP34</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',sans-serif;background:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
+    .container{width:100%;max-width:400px;padding:24px}
+    .logo{text-align:center;margin-bottom:32px}
+    .logo img{height:48px}
+    .logo-txt{font-size:22px;font-weight:800;color:#333;margin-top:8px}
+    .logo-sub{font-size:13px;color:#999;margin-top:4px}
+    .card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,.07)}
+    .card h2{font-size:18px;font-weight:700;color:#333;margin-bottom:6px}
+    .card p{font-size:13px;color:#888;margin-bottom:24px}
+    .field{margin-bottom:16px}
+    .field label{display:block;font-size:12px;font-weight:700;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+    .field input{width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;color:#333;background:#fafafa;transition:border-color .15s}
+    .field input:focus{outline:none;border-color:#FFE600;background:#fff;box-shadow:0 0 0 3px rgba(255,230,0,.2)}
+    .btn-login{width:100%;padding:13px;background:#FFE600;color:#333;border:none;border-radius:8px;font-size:15px;font-weight:800;cursor:pointer;transition:filter .15s,transform .1s;margin-top:4px}
+    .btn-login:hover{filter:brightness(.95)}
+    .btn-login:active{transform:scale(.98)}
+    .btn-login:disabled{opacity:.6;cursor:not-allowed}
+    .btn-sem-login{width:100%;padding:11px;background:transparent;color:#888;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;transition:border-color .15s}
+    .btn-sem-login:hover{border-color:#ccc;color:#555}
+    .erro{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:7px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:16px;display:none}
+    .erro.show{display:block}
+    .loading-wrap{text-align:center;padding:8px 0;display:none}
+    .loading-wrap.show{display:block}
+    .spinner{width:22px;height:22px;border:3px solid #e5e7eb;border-top-color:#FFE600;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="120" height="40" rx="8" fill="#FFE600"/>
+      <text x="60" y="27" text-anchor="middle" font-family="Segoe UI,sans-serif" font-weight="800" font-size="16" fill="#333">Mercado Livre</text>
+    </svg>
+    <div class="logo-txt">Painel Last Mile</div>
+    <div class="logo-sub">SSP34 — Controle de Expedição</div>
+  </div>
+  <div class="card">
+    <h2>Entrar</h2>
+    <p>Use seu email e senha cadastrados</p>
+    <div class="erro" id="erro"></div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="seu@email.com" onkeydown="onKey(event)">
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="senha" placeholder="••••••••" onkeydown="onKey(event)">
+    </div>
+    <div class="loading-wrap" id="loading"><div class="spinner"></div></div>
+    <button class="btn-login" id="btn-login" onclick="login()">Entrar</button>
+    <button class="btn-sem-login" onclick="entrarSemLogin()">Entrar sem login (somente Mapa)</button>
+  </div>
+</div>
+<script>
+  var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
+
+  function onKey(e){ if(e.key==='Enter') login(); }
+
+  function setLoading(s){
+    document.getElementById('loading').className='loading-wrap'+(s?' show':'');
+    document.getElementById('btn-login').disabled=s;
+  }
+
+  function mostrarErro(msg){
+    var el=document.getElementById('erro');
+    el.textContent=msg;
+    el.className='erro show';
+  }
+
+  function login(){
+    var email=document.getElementById('email').value.trim();
+    var senha=document.getElementById('senha').value.trim();
+    if(!email||!senha){mostrarErro('Preencha email e senha.');return;}
+    document.getElementById('erro').className='erro';
+    setLoading(true);
+    fetch(API, {
+      method:'POST',
+      body: JSON.stringify({action:'login', email:email, senha:senha})
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      setLoading(false);
+      if(res.ok){
+        sessionStorage.setItem('usuario', JSON.stringify(res));
+        window.location.href='home.html';
+      } else {
+        mostrarErro(res.msg||'Erro ao fazer login.');
+      }
+    })
+    .catch(function(e){
+      setLoading(false);
+      mostrarErro('Erro de conexão: '+e.message);
+    });
+  }
+
+  function entrarSemLogin(){
+    sessionStorage.setItem('usuario', JSON.stringify({email:'visitante',grupo:'Operacao',transportadora:''}));
+    window.location.href='mapa.html';
+  }
+</script>
+</body>
+</html>

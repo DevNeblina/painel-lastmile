@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home — Painel Last Mile</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',sans-serif;background:#f8f9fa;min-height:100vh}
+    header{background:#FFE600;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+    header h1{font-size:16px;font-weight:800;color:#333}
+    header span{font-size:12px;color:#555}
+    .btn-sair{background:#333;color:#FFE600;border:none;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700}
+    .btn-sair:hover{background:#111}
+    .page{padding:32px 24px;max-width:1100px;margin:0 auto}
+    .boas-vindas{margin-bottom:28px}
+    .boas-vindas h2{font-size:22px;font-weight:800;color:#333}
+    .boas-vindas p{font-size:13px;color:#888;margin-top:4px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+    .card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:24px 20px;cursor:pointer;transition:box-shadow .15s,transform .1s,border-color .15s;text-decoration:none;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+    .card:hover{box-shadow:0 8px 24px rgba(0,0,0,.1);transform:translateY(-2px);border-color:#FFE600}
+    .card-icon{font-size:28px}
+    .card-title{font-size:14px;font-weight:800;color:#333}
+    .card-desc{font-size:11px;color:#888;line-height:1.5}
+    .secao{font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.6px;margin:24px 0 10px}
+  </style>
+</head>
+<body>
+<header>
+  <h1>🏠 Painel Last Mile SSP34</h1>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span id="span-usuario"></span>
+    <button class="btn-sair" onclick="sair()">Sair</button>
+  </div>
+</header>
+<div class="page">
+  <div class="boas-vindas">
+    <h2 id="txt-boas-vindas">Bem-vindo!</h2>
+    <p>Selecione um módulo para continuar</p>
+  </div>
+
+  <div id="cards-lm" style="display:none">
+    <div class="secao">📋 Operação</div>
+    <div class="grid">
+      <a class="card" href="escala.html">
+        <div class="card-icon">📊</div>
+        <div class="card-title">Escala</div>
+        <div class="card-desc">Visualize e gerencie a escala de carregamento</div>
+      </a>
+      <a class="card" href="mapa.html">
+        <div class="card-icon">🗺️</div>
+        <div class="card-title">Mapa de Expedição</div>
+        <div class="card-desc">Visualize o mapa de vagas por área e giro</div>
+      </a>
+      <a class="card" href="escalavagas.html">
+        <div class="card-icon">🪑</div>
+        <div class="card-title">Escala de Vagas</div>
+        <div class="card-desc">Aloque colaboradores e horários de almoço por vaga</div>
+      </a>
+      <a class="card" href="controlealmoco.html">
+        <div class="card-icon">🍽️</div>
+        <div class="card-title">Controle de Almoço</div>
+        <div class="card-desc">Registre saídas e retornos do almoço</div>
+      </a>
+      <a class="card" href="colaboradores.html">
+        <div class="card-icon">👥</div>
+        <div class="card-title">Colaboradores</div>
+        <div class="card-desc">Cadastre e importe colaboradores</div>
+      </a>
+      <a class="card" href="transportadoras.html">
+        <div class="card-icon">🚛</div>
+        <div class="card-title">Transportadoras</div>
+        <div class="card-desc">Gerencie transportadoras, placas e motoristas</div>
+      </a>
+      <a class="card" href="usuarios.html">
+        <div class="card-icon">👤</div>
+        <div class="card-title">Usuários</div>
+        <div class="card-desc">Cadastre e gerencie usuários do sistema</div>
+      </a>
+    </div>
+  </div>
+
+  <div id="cards-transp" style="display:none">
+    <div class="secao">🚛 Transportadora</div>
+    <div class="grid">
+      <a class="card" href="transportadoras.html">
+        <div class="card-icon">🚛</div>
+        <div class="card-title">Minhas Rotas</div>
+        <div class="card-desc">Visualize suas rotas e cadastre placa e motorista</div>
+      </a>
+      <a class="card" href="mapa.html">
+        <div class="card-icon">🗺️</div>
+        <div class="card-title">Mapa de Expedição</div>
+        <div class="card-desc">Visualize o mapa de expedição</div>
+      </a>
+    </div>
+  </div>
+
+  <div id="cards-operacao" style="display:none">
+    <div class="secao">⚙️ Operação</div>
+    <div class="grid">
+      <a class="card" href="mapa.html">
+        <div class="card-icon">🗺️</div>
+        <div class="card-title">Mapa de Expedição</div>
+        <div class="card-desc">Visualize o mapa de expedição</div>
+      </a>
+      <a class="card" href="controlealmoco.html">
+        <div class="card-icon">🍽️</div>
+        <div class="card-title">Controle de Almoço</div>
+        <div class="card-desc">Registre saídas e retornos do almoço</div>
+      </a>
+    </div>
+  </div>
+
+</div>
+<script>
+  var usuario = null;
+  try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
+  if (!usuario || !usuario.email) { window.location.href='index.html'; }
+
+  var grupo = (usuario && usuario.grupo) || '';
+  document.getElementById('span-usuario').textContent = usuario.email + ' (' + grupo + ')';
+  document.getElementById('txt-boas-vindas').textContent = 'Bem-vindo, ' + usuario.email.split('@')[0] + '!';
+
+  if (grupo === 'LM' || grupo === 'Admin') {
+    document.getElementById('cards-lm').style.display = 'block';
+  } else if (grupo === 'Transportadora') {
+    document.getElementById('cards-transp').style.display = 'block';
+  } else {
+    document.getElementById('cards-operacao').style.display = 'block';
+  }
+
+  function sair() {
+    sessionStorage.removeItem('usuario');
+    window.location.href = 'index.html';
+  }
+</script>
+</body>
+</html>

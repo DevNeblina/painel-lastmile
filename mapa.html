@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mapa de Expedição — Painel Last Mile</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; font-size: 12px; }
+    header { background: #FFE600; color: #333; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+    header h1 { font-size: 1rem; font-weight: 700; }
+    .header-right { display: flex; gap: 8px; align-items: center; }
+    .btn-back { background: #333; color: #FFE600; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 700; }
+    .btn-aduana { background: #7c3aed; color: #fff; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+    .btn-reload { background: #0f766e; color: #fff; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+    .toolbar { padding: 10px 16px; background: #fff; border-bottom: 1px solid #e0e0e0; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .toolbar select, .toolbar input { padding: 6px 10px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 0.82rem; }
+    .legenda { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 16px; background: #fff; border-bottom: 1px solid #e0e0e0; align-items: center; }
+    .leg-item { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; }
+    .leg-cor { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.15); }
+    .leg-divider { width: 1px; background: #e2e8f0; align-self: stretch; margin: 0 4px; }
+    .leg-aduana { display: flex; align-items: center; gap: 10px; }
+    .leg-aduana-item { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; }
+    .leg-aduana-dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,0.2); }
+    .wrapper { padding: 16px; overflow-x: auto; }
+    .area-bloco { margin-bottom: 24px; }
+    .area-titulo { font-size: 0.88rem; font-weight: 700; padding: 7px 14px; border-radius: 8px 8px 0 0; border-left: 4px solid rgba(0,0,0,0.2); }
+    table.mapa { border-collapse: collapse; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 0 0 8px 8px; overflow: hidden; min-width: 100%; }
+    table.mapa th, table.mapa td { border: 1px solid #ddd; padding: 0; text-align: center; white-space: nowrap; }
+    table.mapa thead th { background: #333; color: #FFE600; padding: 6px 8px; font-size: 0.75rem; font-weight: 700; min-width: 90px; }
+    table.mapa thead th.th-label { background: #555; min-width: 60px; width: 60px; }
+    th.th-vaga { position: relative; cursor: default; }
+    th.th-vaga:hover .tooltip-almoco { opacity: 1; }
+    .tooltip-almoco { position: absolute; z-index: 999; background: #333; color: #fff; padding: 8px 12px; border-radius: 7px; font-size: 0.75rem; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.15s; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-weight: 400; line-height: 1.6; text-align: left; }
+    .tooltip-almoco::before { content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-bottom-color: #333; }
+    td.td-giro { background: #f3f4f6; font-weight: 700; color: #374151; font-size: 0.72rem; padding: 4px 8px; }
+    td.celula { min-width: 90px; height: 34px; font-size: 0.68rem; cursor: default; position: relative; transition: opacity 0.15s; }
+    td.celula:hover { opacity: 0.85; }
+    td.celula.vazia { background: #fafafa; color: #ccc; }
+    .cell-inner { padding: 3px 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+    .cell-rota { font-weight: 700; font-size: 0.68rem; }
+    .cell-transp { font-size: 0.62rem; opacity: 0.85; margin-top: 1px; }
+    .cell-aduana { font-size: 0.6rem; margin-top: 2px; font-weight: 700; }
+    .aduana-dot { position: absolute; top: 3px; right: 4px; width: 8px; height: 8px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.6); }
+    .aduana-dot.em_andamento { background: #fbbf24; }
+    .aduana-dot.concluida { background: #4ade80; }
+    .tooltip { position: absolute; z-index: 999; background: #333; color: #fff; padding: 8px 12px; border-radius: 7px; font-size: 0.75rem; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.15s; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #333; }
+    td.celula:hover .tooltip { opacity: 1; }
+    .msg { padding: 8px 14px; border-radius: 6px; margin: 6px 16px; font-size: 0.82rem; display: none; }
+    .msg.ok { background: #dcfce7; color: #166534; display: block; }
+    .msg.err { background: #fee2e2; color: #991b1b; display: block; }
+    #loading { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 500; align-items: center; justify-content: center; flex-direction: column; gap: 12px; color: #fff; font-size: 0.9rem; font-weight: 600; }
+    #loading.on { display: flex; }
+    .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top-color: #FFE600; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: center; justify-content: center; padding: 16px; }
+    .modal-bg.show { display: flex; }
+    .modal-aduana { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 600px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+    .modal-aduana h3 { font-size: 1rem; color: #333; margin-bottom: 8px; }
+    .modal-aduana .instrucao { font-size: 0.82rem; color: #555; margin-bottom: 12px; line-height: 1.5; }
+    .modal-aduana .link-api { display: inline-block; background: #f1f5f9; border: 1.5px solid #e2e8f0; border-radius: 6px; padding: 6px 12px; font-size: 0.75rem; color: #333; font-family: monospace; word-break: break-all; margin-bottom: 12px; cursor: pointer; text-decoration: none; }
+    .modal-aduana textarea { width: 100%; height: 160px; border: 1.5px solid #ddd; border-radius: 6px; padding: 10px; font-size: 0.8rem; font-family: monospace; resize: vertical; outline: none; }
+    .modal-aduana textarea:focus { border-color: #FFE600; }
+    .modal-btns { display: flex; gap: 8px; margin-top: 12px; }
+    .modal-btns button { flex: 1; padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 0.88rem; }
+    .btn-confirm { background: #FFE600; color: #333; }
+    .btn-cancel { background: #eee; color: #555; }
+    .aduana-info { font-size: 0.75rem; color: #666; margin-top: 8px; background: #f8f9fb; padding: 6px 10px; border-radius: 5px; min-height: 28px; }
+  </style>
+</head>
+<body>
+<div id="loading"><div class="spinner"></div><span>Carregando mapa...</span></div>
+<div id="msgGlobal" class="msg"></div>
+<header>
+  <h1>🗺️ Mapa de Expedição</h1>
+  <div class="header-right">
+    <button class="btn-reload" onclick="recarregar()">🔄 Atualizar</button>
+    <button class="btn-aduana" id="btnAduana" style="display:none" onclick="abrirModalAduana()">📡 Atualizar Aduana</button>
+    <button class="btn-back" onclick="voltar()">🏠 Home</button>
+  </div>
+</header>
+<div class="toolbar">
+  <select id="selCiclo" onchange="trocarCiclo()"><option value="">Carregando...</option></select>
+  <select id="filtroArea" onchange="renderMapa()"><option value="">Todas as Áreas</option></select>
+  <input type="text" id="filtroRota" placeholder="🔍 Buscar rota..." oninput="renderMapa()" />
+</div>
+<div class="legenda" id="legenda"></div>
+<div class="wrapper" id="wrapper"><p style="color:#aaa;padding:20px">Carregando...</p></div>
+<div class="modal-bg" id="modalAduana">
+  <div class="modal-aduana">
+    <h3>📡 Atualizar Aduana</h3>
+    <div class="instrucao">1. Clique no link abaixo para abrir a API da Aduana<br>2. Pressione Ctrl+A e depois Ctrl+C para copiar tudo<br>3. Volte aqui e cole no campo abaixo<br>4. Clique em Confirmar</div>
+    <a class="link-api" href="https://envios.adminml.com/logistics/audit/api/audits/search?auditType=driver&timezone=America%2FSao_Paulo" target="_blank">🔗 Abrir API da Aduana</a>
+    <textarea id="jsonAduana" placeholder="Cole o JSON aqui..."></textarea>
+    <div class="aduana-info" id="aduana-info"></div>
+    <div class="modal-btns">
+      <button class="btn-confirm" onclick="processarAduana()">✅ Confirmar</button>
+      <button class="btn-cancel" onclick="fecharModalAduana()">Cancelar</button>
+    </div>
+  </div>
+</div>
+<script>
+var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
+var usuario = null;
+try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
+if (!usuario || !usuario.email) { window.location.href='index.html'; }
+
+var podeEditarAduana = usuario && (usuario.grupo === 'LM' || usuario.grupo === 'Admin');
+var CORES = ['#e57373','#64b5f6','#81c784','#ffd54f','#ba68c8','#4db6ac','#ff8a65','#90a4ae','#f06292','#a5d6a7','#ffcc02','#80cbc4','#ce93d8','#80deea','#bcaaa4','#ef9a9a','#b0bec5','#ffe082','#c5e1a5','#ffab91'];
+var CORES_ESCURAS = ['#ffd54f','#ffcc02','#ffe082','#a5d6a7','#c5e1a5','#80deea','#bcaaa4','#b0bec5'];
+var ORDEM_AREAS = ['Vermelha','Amarela','Verde','Rosa','Externa'];
+var COR_AREAS = {'Vermelha':{bg:'#b91c1c',txt:'#fff'},'Amarela':{bg:'#d97706',txt:'#fff'},'Verde':{bg:'#15803d',txt:'#fff'},'Rosa':{bg:'#be185d',txt:'#fff'},'Externa':{bg:'#1d4ed8',txt:'#fff'},'Sem Area':{bg:'#374151',txt:'#fff'}};
+var corMap={},corIdx=0,dadosEscala=[],aduanaMap={},almocoRegistros=[],almocoMap={},cicloAtual='';
+
+function api(params){ return fetch(API,{method:'POST',body:JSON.stringify(params)}).then(function(r){return r.json();}); }
+function getCorTransp(t){if(!t)return'#f0f0f0';if(!corMap[t]){corMap[t]=CORES[corIdx%CORES.length];corIdx++;}return corMap[t];}
+function txtCor(c){return CORES_ESCURAS.indexOf(c)>-1?'#333':'#fff';}
+function voltar(){ window.location.href='home.html'; }
+function recarregar(){corMap={};corIdx=0;carregarDados(cicloAtual);}
+function loading(s){var el=document.getElementById('loading');s?el.classList.add('on'):el.classList.remove('on');}
+function mostrarMsg(msg,ok){var el=document.getElementById('msgGlobal');el.textContent=msg;el.className='msg '+(ok?'ok':'err');setTimeout(function(){el.className='msg';},4000);}
+function parseGiro(g){if(!g)return 99;var m=String(g).match(/\d+/);return m?parseInt(m[0],10):99;}
+
+function montarAlmocoMap(registros){
+  var mapa={};var agora=new Date();var TOLERANCIA_ATRASO_MIN=60;
+  registros.forEach(function(reg){
+    var vaga=String(reg.vaga||'');if(!vaga)return;
+    var statusAtual=mapa[vaga]||'';var statusReg=String(reg.status||'').trim();
+    if(statusReg.toLowerCase().indexOf('retornou')===0)return;
+    var estaAtrasado=false;var saida=String(reg.saida||'').trim();
+    if(saida&&saida.indexOf(':')>-1){
+      var partes=saida.split(':');
+      var saidaDate=new Date(agora.getFullYear(),agora.getMonth(),agora.getDate(),parseInt(partes[0],10),parseInt(partes[1],10),0);
+      var diffMin=(agora-saidaDate)/60000;if(diffMin>=TOLERANCIA_ATRASO_MIN)estaAtrasado=true;
+    }
+    if(estaAtrasado||statusReg==='Atrasado'){mapa[vaga]='atrasado';}
+    else if(statusAtual!=='atrasado'){if(statusReg==='Almoçando'||statusReg==='Saída fora do horário'){mapa[vaga]='almocando';}}
+  });
+  return mapa;
+}
+
+function iniciar(){
+  loading(true);
+  if(podeEditarAduana)document.getElementById('btnAduana').style.display='inline-block';
+  api({action:'getCiclos'}).then(function(res){
+    var ciclos=res.data||[];
+    var sel=document.getElementById('selCiclo');sel.innerHTML='';
+    ciclos.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
+    cicloAtual=ciclos[0]||'AM';carregarDados(cicloAtual);
+  }).catch(function(e){loading(false);document.getElementById('wrapper').innerHTML='<p style="color:red;padding:20px">Erro: '+e.message+'</p>';});
+}
+
+function trocarCiclo(){cicloAtual=document.getElementById('selCiclo').value;corMap={};corIdx=0;carregarDados(cicloAtual);}
+
+function carregarDados(ciclo){
+  loading(true);
+  Promise.all([
+    api({action:'getEscalaParaMapa',ciclo:ciclo}),
+    api({action:'getAduana',ciclo:ciclo}),
+    api({action:'getRegistrosAlmoco',ciclo:ciclo})
+  ]).then(function(res){
+    dadosEscala=res[0].data||[];
+    aduanaMap=res[1].data||{};
+    almocoRegistros=res[2].data||[];
+    almocoMap=montarAlmocoMap(almocoRegistros);
+    preencherFiltroArea(dadosEscala);renderMapa();loading(false);
+  }).catch(function(e){loading(false);mostrarMsg('Erro: '+e.message,false);});
+}
+
+function preencherFiltroArea(dados){
+  var sel=document.getElementById('filtroArea');sel.innerHTML='<option value="">Todas as Áreas</option>';
+  var vis={};
+  ORDEM_AREAS.forEach(function(a){
+    var existe=dados.some(function(d){return d.area===a;});
+    if(existe&&!vis[a]){vis[a]=true;var o=document.createElement('option');o.value=a;o.textContent=a;sel.appendChild(o);}
+  });
+}
+
+function renderMapa(){
+  var fArea=document.getElementById('filtroArea').value;
+  var fRota=document.getElementById('filtroRota').value.toLowerCase();
+  var filtrado=dadosEscala.filter(function(d){
+    if(fArea&&d.area!==fArea)return false;
+    if(fRota&&String(d.rota||'').toLowerCase().indexOf(fRota)===-1&&String(d.otimizada||'').toLowerCase().indexOf(fRota)===-1)return false;
+    return true;
+  });
+  var porArea={};
+  filtrado.forEach(function(d){
+    var area=d.area||'Sem Area';var vaga=parseInt(d.vaga,10)||0;var giro=parseGiro(d.giro);
+    if(!porArea[area])porArea[area]={};if(!porArea[area][vaga])porArea[area][vaga]={};porArea[area][vaga][giro]=d;
+  });
+  var transpUsadas={};filtrado.forEach(function(d){if(d.transportadora)transpUsadas[d.transportadora]=true;});
+  var legHTML='';
+  Object.keys(transpUsadas).sort().forEach(function(t){var cor=getCorTransp(t);legHTML+='<div class="leg-item"><div class="leg-cor" style="background:'+cor+'"></div><span>'+t+'</span></div>';});
+  if(Object.keys(aduanaMap).length>0){legHTML+='<div class="leg-divider"></div><div class="leg-aduana"><div class="leg-aduana-item"><div class="leg-aduana-dot em_andamento"></div><span>Em andamento</span></div><div class="leg-aduana-item"><div class="leg-aduana-dot concluida"></div><span>Concluída</span></div></div>';}
+  document.getElementById('legenda').innerHTML=legHTML||'<span style="color:#aaa;font-size:0.78rem">Nenhuma transportadora alocada.</span>';
+  var wrapper=document.getElementById('wrapper');
+  if(Object.keys(porArea).length===0){wrapper.innerHTML='<p style="color:#aaa;padding:20px">Nenhuma rota encontrada.</p>';return;}
+  var html='';
+  var areasOrdenadas=ORDEM_AREAS.filter(function(a){return porArea[a];});
+  Object.keys(porArea).forEach(function(a){if(areasOrdenadas.indexOf(a)===-1)areasOrdenadas.push(a);});
+  areasOrdenadas.forEach(function(area){
+    var vagasObj=porArea[area];
+    var vagasNums=Object.keys(vagasObj).map(Number).sort(function(a,b){return a-b;});
+    var corArea=COR_AREAS[area]||COR_AREAS['Sem Area'];
+    var maxGiro=1;
+    vagasNums.forEach(function(v){Object.keys(vagasObj[v]).forEach(function(g){if(parseInt(g)>maxGiro)maxGiro=parseInt(g);});});
+    html+='<div class="area-bloco">';
+    html+='<div class="area-titulo" style="background:'+corArea.bg+';color:'+corArea.txt+'">Área '+area+'</div>';
+    html+='<table class="mapa"><thead><tr><th class="th-label">Giro</th>';
+    vagasNums.forEach(function(v){
+      var stAlmoco=almocoMap[String(v)]||'';
+      var iconeAlmoco=stAlmoco==='atrasado'?' ⚠️':stAlmoco==='almocando'?' 🍽️':'';
+      var infoVaga=null;
+      for(var i=0;i<dadosEscala.length;i++){if(String(dadosEscala[i].vaga)===String(v)){infoVaga=dadosEscala[i];break;}}
+      var regAlmoco=null;
+      for(var i=0;i<almocoRegistros.length;i++){if(String(almocoRegistros[i].vaga)===String(v)){regAlmoco=almocoRegistros[i];break;}}
+      var tooltipAlmoco='';
+      if(infoVaga&&infoVaga.nome){
+        tooltipAlmoco='<div class="tooltip-almoco">'
+          +'👤 '+esc(infoVaga.nome)+'<br>'
+          +(infoVaga.horario_almoco?'🕐 Almoço: '+esc(infoVaga.horario_almoco)+'<br>':'')
+          +(regAlmoco&&regAlmoco.saida?'↗️ Saída: '+esc(regAlmoco.saida)+'<br>':'')
+          +(regAlmoco&&regAlmoco.retorno?'↩️ Retorno: '+esc(regAlmoco.retorno):'')
+          +'</div>';
+      }
+      html+='<th class="th-vaga">Vaga '+v+iconeAlmoco+tooltipAlmoco+'</th>';
+    });
+    html+='</tr></thead><tbody>';
+    for(var g=1;g<=maxGiro;g++){
+      html+='<tr><td class="td-giro">'+g+'</td>';
+      vagasNums.forEach(function(v){
+        var d=vagasObj[v]&&vagasObj[v][g];
+        if(d&&d.rota){
+          var cor=getCorTransp(d.transportadora);var tc=txtCor(cor);
+          var isHybrid=String(d.projeto||'').toLowerCase().indexOf('hybrid')>-1;
+          var rotaKey=d.otimizada||d.rota;
+          var stAduana=aduanaMap[rotaKey]||aduanaMap[d.rota]||'';
+          var dotAduana=stAduana?'<div class="aduana-dot '+stAduana+'"></div>':'';
+          var labelAduana=stAduana==='em_andamento'?'🟡 Aduana':stAduana==='concluida'?'🟢 Concluída':'';
+          var tooltip='<div class="tooltip">🚛 '+esc(d.transportadora||'Sem transportadora')+'<br>📦 '+esc(d.pacotes||'?')+' pcts<br>🏙️ '+esc(d.cidade||'')+(isHybrid?'<br>💰 Rota Híbrida':'')+(labelAduana?'<br>'+labelAduana:'')+'</div>';
+          html+='<td class="celula" style="background:'+cor+';color:'+tc+'">'+dotAduana+'<div class="cell-inner"><span class="cell-rota">'+(d.otimizada||d.rota)+(isHybrid?' 💰':'')+'</span>'+(d.transportadora?'<span class="cell-transp">'+d.transportadora.split(' ')[0]+'</span>':'')+(labelAduana?'<span class="cell-aduana">'+labelAduana+'</span>':'')+'</div>'+tooltip+'</td>';
+        } else {
+          html+='<td class="celula vazia"><div class="cell-inner">—</div></td>';
+        }
+      });
+      html+='</tr>';
+    }
+    html+='</tbody></table></div>';
+  });
+  wrapper.innerHTML=html;
+}
+
+function abrirModalAduana(){document.getElementById('jsonAduana').value='';document.getElementById('aduana-info').textContent='';document.getElementById('modalAduana').classList.add('show');}
+function fecharModalAduana(){document.getElementById('modalAduana').classList.remove('show');}
+function processarAduana(){
+  var raw=document.getElementById('jsonAduana').value.trim();
+  if(!raw){mostrarMsg('Cole o JSON antes de confirmar.',false);return;}
+  var data;try{data=JSON.parse(raw);}catch(e){mostrarMsg('JSON inválido.',false);return;}
+  if(!Array.isArray(data)){mostrarMsg('Formato inesperado.',false);return;}
+  var rotas=[];
+  data.forEach(function(item){if(item.status==='pending')return;var rota=item.driver&&item.driver.cluster_id?item.driver.cluster_id:'';if(!rota)return;rotas.push({rota:rota,status:item.status==='in_progress'?'em_andamento':'concluida'});});
+  document.getElementById('aduana-info').textContent=rotas.length+' rotas encontradas. Salvando...';
+  loading(true);
+  api({action:'salvarAduana',ciclo:cicloAtual,rotas:rotas}).then(function(res){
+    loading(false);
+    if(res.ok){aduanaMap={};rotas.forEach(function(r){aduanaMap[r.rota]=r.status;});fecharModalAduana();renderMapa();mostrarMsg('✅ Aduana atualizada! '+rotas.length+' rotas.',true);}
+    else{mostrarMsg('Erro: '+(res.msg||'?'),false);}
+  }).catch(function(e){loading(false);mostrarMsg('Erro: '+e.message,false);});
+}
+
+function esc(v){if(v===null||v===undefined)return'';return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+iniciar();
+</script>
+</body>
+</html>

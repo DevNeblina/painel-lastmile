@@ -5,273 +5,562 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Transportadoras — Painel Last Mile</title>
   <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',sans-serif;background:#f8f9fa;font-size:12px;color:#333}
-    header{background:#FFE600;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-    header h1{font-size:15px;font-weight:800;color:#333}
-    .header-right{display:flex;gap:8px;align-items:center}
-    .btn{padding:7px 14px;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;transition:filter .15s;white-space:nowrap}
-    .btn:hover{filter:brightness(.92)}
-    .btn-home{background:#333;color:#FFE600}
-    .btn-salvar{background:#16a34a;color:#fff}
-    .btn-csv{background:#1d4ed8;color:#fff}
-    .toolbar{padding:10px 16px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .toolbar select,.toolbar input{padding:6px 10px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:12px}
-    .wrapper{padding:16px;overflow-x:auto}
-    table{width:100%;border-collapse:collapse;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06);border-radius:10px;overflow:hidden;min-width:900px}
-    thead th{background:#333;color:#FFE600;padding:10px 12px;font-size:11px;font-weight:700;text-align:left;white-space:nowrap}
-    tbody td{padding:8px 12px;border-bottom:1px solid #f1f5f9;font-size:11px;white-space:nowrap}
-    tbody tr:hover{background:#fffbeb}
-    tbody tr:last-child td{border-bottom:none}
-    .inp-edit{padding:4px 8px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:11px;background:#fff;width:130px}
-    .inp-edit:focus{outline:none;border-color:#FFE600}
-    .msg{padding:8px 14px;border-radius:6px;margin:6px 16px;font-size:12px;display:none}
-    .msg.ok{background:#dcfce7;color:#166534;display:block}
-    .msg.err{background:#fee2e2;color:#991b1b;display:block}
-    #loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
-    #loading.on{display:flex}
-    .spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,.3);border-top-color:#FFE600;border-radius:50%;animation:spin .8s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;padding:16px}
-    .modal-bg.show{display:flex}
-    .modal{background:#fff;border-radius:12px;padding:24px;width:100%;max-width:440px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
-    .modal h3{font-size:14px;font-weight:700;margin-bottom:16px;color:#333}
-    .field{margin-bottom:12px}
-    .field label{display:block;font-size:11px;font-weight:700;color:#555;margin-bottom:4px;text-transform:uppercase}
-    .field input,.field select{width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:12px}
-    .field input:focus,.field select:focus{outline:none;border-color:#FFE600}
-    .modal-btns{display:flex;gap:8px;margin-top:16px}
-    .modal-btns button{flex:1;padding:10px;border-radius:7px;border:none;cursor:pointer;font-weight:700;font-size:12px}
-    .btn-confirm{background:#FFE600;color:#333}
-    .btn-cancel{background:#eee;color:#555}
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
+    header { background: #FFE600; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+    header h1 { font-size: 1rem; font-weight: 700; color: #333; }
+    .btn-back   { background: #333; color: #FFE600; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 700; }
+    .btn-reload { background: #0f766e; color: #fff; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+    .toolbar { padding: 10px 16px; background: #fff; border-bottom: 1px solid #e0e0e0; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .toolbar select, .toolbar input { padding: 7px 10px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 0.82rem; min-width: 150px; }
+    .toolbar select:focus, .toolbar input:focus { outline: none; border-color: #FFE600; }
+    .btn { padding: 7px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: filter .15s; }
+    .btn:hover { filter: brightness(.9); }
+    .btn-green   { background: #15803d; color: #fff; }
+    .btn-orange  { background: #ea580c; color: #fff; }
+    .btn-outline { background: #fff; color: #333; border: 2px solid #333; }
+    .btn-purple  { background: #7c3aed; color: #fff; }
+    .btn-teal    { background: #0f766e; color: #fff; }
+    .btn-yellow  { background: #FFE600; color: #333; }
+    .btn-status-pend { background: #fef9c3; color: #854d0e; border: 1.5px solid #fbbf24; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+    .btn-status-ok   { background: #dcfce7; color: #166534; border: 1.5px solid #4ade80; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+    .btn-status-pend:hover { background: #fbbf24; color: #fff; }
+    .btn-status-ok:hover   { background: #16a34a; color: #fff; }
+    #cards-modal { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 16px; background: #fff; border-bottom: 1px solid #e0e0e0; align-items: center; }
+    .card-modal { background: #f8f9fb; border: 1px solid #e2e8f0; border-radius: 7px; padding: 6px 14px; text-align: center; min-width: 90px; cursor: pointer; transition: all .15s; }
+    .card-modal:hover { border-color: #FFE600; background: #fffbeb; }
+    .card-modal.ativo { border-color: #FFE600; background: #fffbeb; }
+    .card-modal.total { border-color: #333; }
+    .card-modal.total .card-modal-v { color: #333; }
+    .card-modal-v { font-size: 1.15rem; font-weight: 700; color: #333; }
+    .card-modal-l { font-size: 10px; color: #64748b; margin-top: 1px; white-space: nowrap; }
+    .card-divider { width: 1px; background: #e2e8f0; align-self: stretch; margin: 0 4px; }
+    .wrapper { padding: 14px 16px 60px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.07); min-width: 1500px; }
+    thead { background: #333; color: #FFE600; }
+    thead th { padding: 9px 8px; text-align: left; font-weight: 600; white-space: nowrap; cursor: pointer; user-select: none; transition: background .15s; }
+    thead th:hover { background: #111; }
+    thead th.no-sort { cursor: default; }
+    thead th.no-sort:hover { background: #333; }
+    tbody tr:nth-child(even) { background: #f9f9f9; }
+    tbody tr:hover { background: #fffbeb; }
+    tbody td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+    input.edit { border: 1.5px solid #ddd; border-radius: 5px; padding: 4px 7px; font-size: 0.8rem; width: 140px; }
+    input.edit:focus { outline: none; border-color: #FFE600; }
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: center; justify-content: center; padding: 16px; }
+    .modal-bg.show { display: flex; }
+    .modal { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 480px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+    .modal-wide { max-width: 1100px; max-height: 85vh; display: flex; flex-direction: column; }
+    .modal-drivers { max-width: 98vw; width: 98vw; max-height: 90vh; display: flex; flex-direction: column; }
+    .modal-drivers .modal-scroll { overflow-x: hidden; overflow-y: auto; flex: 1; }
+    .modal-colunas { max-width: 420px; max-height: 80vh; display: flex; flex-direction: column; }
+    .modal-colunas .modal-scroll-colunas { overflow-y: auto; flex: 1; margin-top: 10px; }
+    .modal h3 { margin-bottom: 16px; color: #333; font-size: 1rem; }
+    .modal label { font-size: 0.82rem; font-weight: 600; color: #555; display: block; margin-bottom: 3px; }
+    .modal input, .modal select { width: 100%; padding: 9px 10px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 0.88rem; margin-bottom: 12px; }
+    .modal input:focus, .modal select:focus { outline: none; border-color: #FFE600; }
+    .modal-btns { display: flex; gap: 8px; margin-top: 4px; }
+    .modal-btns button { flex: 1; padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 0.88rem; }
+    .btn-confirm { background: #FFE600; color: #333; }
+    .btn-cancel  { background: #eee; color: #555; }
+    .modal-scroll { overflow-y: auto; flex: 1; margin-top: 10px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 10px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
+    .modal-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .modal-table th { background: #333; color: #FFE600; padding: 7px 8px; text-align: left; white-space: nowrap; }
+    .modal-table td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; vertical-align: middle; }
+    .modal-table tr:hover td { background: #fffbeb; }
+    .pill { display: inline-block; padding: 2px 8px; background: #e2e8f0; border-radius: 20px; font-size: 0.75rem; margin-right: 4px; margin-bottom: 4px; }
+    .msg { padding: 9px 14px; border-radius: 6px; margin: 8px 16px 0; font-size: 0.85rem; display: none; }
+    .msg.ok  { background: #dcfce7; color: #166534; display: block; }
+    .msg.err { background: #fee2e2; color: #991b1b; display: block; }
+    #loading { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 500; align-items: center; justify-content: center; flex-direction: column; gap: 12px; color: #fff; font-size: 0.9rem; font-weight: 600; }
+    #loading.on { display: flex; }
+    .spinner { width: 38px; height: 38px; border: 4px solid rgba(255,255,255,0.3); border-top-color: #FFE600; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-edit-sm { background: #fffbeb; color: #333; border: 1px solid #FFE600; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px; }
+    .btn-del-sm  { background: #fee2e2; color: #991b1b; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .btn-edit-sm:hover { background: #FFE600; }
+    .btn-del-sm:hover  { background: #991b1b; color: #fff; }
+    .col-toggle-item { display: flex; align-items: center; gap: 10px; padding: 7px 4px; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
+    .col-toggle-item:last-child { border-bottom: none; }
+    .col-toggle-item input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: #333; }
+    .col-toggle-item label { cursor: pointer; flex: 1; color: #374151; font-weight: 500; }
   </style>
 </head>
+
 <body>
-<div id="loading"><div class="spinner"></div></div>
+<div id="loading"><div class="spinner"></div><span>Carregando...</span></div>
 <div id="msgGlobal" class="msg"></div>
 
 <header>
   <h1>🚛 Transportadoras</h1>
-  <div class="header-right">
-    <button class="btn btn-csv" onclick="baixarCSV()">⬇️ Baixar CSV</button>
-    <button class="btn btn-salvar" onclick="salvar()">💾 Salvar</button>
-    <button class="btn" style="background:#7c3aed;color:#fff" onclick="abrirModalVeiculo()">🚗 Cadastrar Veículo</button>
-    <button class="btn" style="background:#0f766e;color:#fff" onclick="abrirModalMotorista()">👤 Cadastrar Motorista</button>
-    <button class="btn btn-home" onclick="voltar()">🏠 Home</button>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="btn-reload" onclick="recarregar()">🔄 Atualizar</button>
+    <button class="btn-back" onclick="voltar()">🏠 Home</button>
   </div>
 </header>
 
 <div class="toolbar">
   <select id="selCiclo" onchange="trocarCiclo()"><option value="">Carregando...</option></select>
-  <input type="text" id="filtroRota" placeholder="🔍 Buscar rota..." oninput="renderTabela()">
+  <select id="filtroTransp" onchange="onFiltroTranspChange()"><option value="">Todas as transportadoras</option></select>
+  <input type="text" id="filtroModal" placeholder="🔍 Buscar modal..." oninput="filtrar()" />
+  <input type="text" id="filtroTexto" placeholder="🔍 Buscar rota, cidade..." oninput="filtrar()" />
+  <button class="btn btn-green"   onclick="abrirModalDriver(false)">➕ Driver</button>
+  <button class="btn btn-orange"  onclick="abrirListaDrivers()">👥 Drivers</button>
+  <button class="btn btn-outline" onclick="abrirModalColunas()">👁️ Colunas</button>
+  <button class="btn btn-yellow"  onclick="salvarEscala()">💾 Salvar</button>
+  <button class="btn btn-teal"    onclick="baixarTabela()">📥 Baixar</button>
 </div>
 
+<div id="cards-modal"></div>
+
 <div class="wrapper">
-  <table>
+  <table id="tabelaPrincipal">
     <thead>
-      <tr>
-        <th>Planejada</th><th>Otimizada</th><th>Pacotes</th><th>Paradas</th>
-        <th>Modal</th><th>Ocup/Vol</th><th>Bairro</th><th>Cidade</th>
-        <th>Giro</th><th>Vaga</th><th>Roteiro</th><th>Transportadora</th>
-        <th>Placa</th><th>Driver</th>
+      <tr id="thead-row">
+        <th data-col="0"  onclick="sortBy('rota')">Planejada ↕</th>
+        <th data-col="1"  onclick="sortBy('otimizada')">Otimizada ↕</th>
+        <th data-col="2"  onclick="sortBy('pacotes')">Pacotes ↕</th>
+        <th data-col="3"  onclick="sortBy('parada')">Paradas ↕</th>
+        <th data-col="4"  onclick="sortBy('tipo_veiculo')">Tipo Veículo ↕</th>
+        <th data-col="5"  onclick="sortBy('ocup_volumosos')">% Ocup ↕</th>
+        <th data-col="6"  onclick="sortBy('bairro')">Bairro ↕</th>
+        <th data-col="7"  onclick="sortBy('cidade')">Cidade ↕</th>
+        <th data-col="8"  onclick="sortBy('projeto')">Projeto ↕</th>
+        <th data-col="9"  onclick="sortBy('giro')">Giro ↕</th>
+        <th data-col="10" onclick="sortBy('area')">Área ↕</th>
+        <th data-col="11" onclick="sortBy('doca')">Doca ↕</th>
+        <th data-col="12" onclick="sortBy('roteiro')">Roteiro ↕</th>
+        <th data-col="13" onclick="sortBy('placa')">Placa ↕</th>
+        <th data-col="14" onclick="sortBy('driver')">Driver ↕</th>
+        <th data-col="15" onclick="sortBy('transportadora')">Transportadora ↕</th>
+        <th data-col="16" class="no-sort">Carregado</th>
+        <th data-col="17" class="no-sort">Detalhe</th>
       </tr>
     </thead>
-    <tbody id="tbody"><tr><td colspan="14" style="text-align:center;padding:24px;color:#aaa">Carregando...</td></tr></tbody>
+    <tbody id="tbody"></tbody>
   </table>
 </div>
 
-<!-- Modal Veículo -->
-<div class="modal-bg" id="modalVeiculo">
-  <div class="modal">
-    <h3>🚗 Cadastrar Veículo</h3>
-    <div class="field"><label>Placa</label><input type="text" id="v-placa" placeholder="ABC-1234"></div>
-    <div class="field"><label>Tipo</label><input type="text" id="v-tipo" placeholder="Van, VUC, Caminhão..."></div>
-    <div class="field"><label>Transportadora</label>
-      <select id="v-transp"><option value="">Selecionar...</option></select>
+<!-- Modal Detalhe -->
+<div class="modal-bg" id="modalDetalhe">
+  <div class="modal modal-wide">
+    <h3 id="detalhe-titulo">📦 Detalhe da Rota</h3>
+    <div id="detalhe-resumo" style="margin-bottom:8px"></div>
+    <div class="modal-scroll">
+      <table class="modal-table">
+        <thead><tr>
+          <th>Rota</th><th>Parada</th><th>Shipment ID</th>
+          <th>Cidade</th><th>Bairro</th><th>CEP</th>
+          <th>Merchant Type</th><th>Promessa Início</th><th>Promessa Fim</th>
+        </tr></thead>
+        <tbody id="tbody-detalhe"></tbody>
+      </table>
     </div>
-    <div class="modal-btns">
-      <button class="btn-confirm" onclick="salvarVeiculo()">✅ Salvar</button>
-      <button class="btn-cancel" onclick="fecharModal('modalVeiculo')">Cancelar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Motorista -->
-<div class="modal-bg" id="modalMotorista">
-  <div class="modal">
-    <h3>👤 Cadastrar Motorista</h3>
-    <div class="field"><label>Nome</label><input type="text" id="m-nome" placeholder="Nome completo"></div>
-    <div class="field"><label>CPF</label><input type="text" id="m-cpf" placeholder="000.000.000-00"></div>
-    <div class="field"><label>Transportadora</label>
-      <select id="m-transp"><option value="">Selecionar...</option></select>
-    </div>
-    <div class="modal-btns">
-      <button class="btn-confirm" onclick="salvarMotorista()">✅ Salvar</button>
-      <button class="btn-cancel" onclick="fecharModal('modalMotorista')">Cancelar</button>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="fecharModal('modalDetalhe')">Fechar</button>
     </div>
   </div>
 </div>
 
-<script>
-  var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
-  var usuario = null;
-  var cicloAtual = 'AM';
-  var dadosEscala = [];
-  var transportadoras = [];
+<!-- Modal Driver -->
+<div class="modal-bg" id="modalDriver">
+  <div class="modal">
+    <h3 id="driver-titulo">👨‍✈️ Cadastrar Driver</h3>
+    <label>Nome</label><input id="d_nome" placeholder="Nome completo" />
+    <label>Placa</label><input id="d_placa" placeholder="ABC-1234" />
+    <label>Modal</label><input id="d_modal" placeholder="Van, VUC, Utilitário..." />
+    <label>Transportadora</label><select id="d_transp"></select>
+    <div class="modal-btns">
+      <button class="btn-confirm" onclick="salvarDriver()">💾 Salvar</button>
+      <button class="btn-cancel"  onclick="fecharModal('modalDriver')">Cancelar</button>
+    </div>
+  </div>
+</div>
 
-  try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
-  if (!usuario || !usuario.email) { window.location.href='index.html'; }
+<!-- Modal Lista Drivers -->
+<div class="modal-bg" id="modalListaDrivers">
+  <div class="modal modal-drivers">
+    <h3>👥 Drivers Cadastrados</h3>
+    <input id="busca-driver" type="text" placeholder="🔍 Buscar nome, placa, modal..."
+      oninput="filtrarListaDrivers()"
+      style="margin-bottom:10px;width:100%;padding:7px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:0.85rem;" />
+    <div class="modal-scroll">
+      <table class="modal-table">
+        <thead><tr><th>Nome</th><th>Placa</th><th>Modal</th><th>Transportadora</th><th>Ações</th></tr></thead>
+        <tbody id="tbody-drivers"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="fecharModal('modalListaDrivers')">Fechar</button>
+    </div>
+  </div>
+</div>
 
-  var isTransp = usuario && usuario.grupo === 'Transportadora';
+<!-- Modal Colunas -->
+<div class="modal-bg" id="modalColunas">
+  <div class="modal modal-colunas">
+    <h3>👁️ Mostrar / Ocultar Colunas</h3>
+    <div class="modal-scroll-colunas">
+      <div id="lista-colunas"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="marcarTodasColunas(true)">Mostrar todas</button>
+      <button class="btn btn-cancel"  onclick="fecharModal('modalColunas')">Fechar</button>
+    </div>
+  </div>
+</div>
 
-  function voltar(){ window.location.href='home.html'; }
-  function loading(s){ document.getElementById('loading').className=s?'on':''; }
-  function mostrarMsg(msg,ok){
-    var el=document.getElementById('msgGlobal');
-    el.textContent=msg; el.className='msg '+(ok?'ok':'err');
-    setTimeout(function(){ el.className='msg'; },4000);
+  <script>
+var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
+var usuario = null;
+try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
+if (!usuario || !usuario.email) { window.location.href='index.html'; }
+
+var dadosBrutos=[],dadosFiltrados=[],transps=[],todosDrivers=[];
+var statusMap={},cicloAtual='',filtroModalAtivo='',sCampo='',sAsc=true;
+
+var COLUNAS=[
+  {label:'Planejada',vis:true},{label:'Otimizada',vis:true},{label:'Pacotes',vis:true},
+  {label:'Paradas',vis:true},{label:'Tipo Veículo',vis:true},{label:'% Ocup',vis:true},
+  {label:'Bairro',vis:true},{label:'Cidade',vis:true},{label:'Projeto',vis:true},
+  {label:'Giro',vis:true},{label:'Área',vis:true},{label:'Doca',vis:true},
+  {label:'Roteiro',vis:true},{label:'Placa',vis:true},{label:'Driver',vis:true},
+  {label:'Transportadora',vis:true},{label:'Carregado',vis:true},{label:'Detalhe',vis:true}
+];
+
+function api(params){ return fetch(API,{method:'POST',body:JSON.stringify(params)}).then(function(r){return r.json();}); }
+function voltar(){ window.location.href='home.html'; }
+function recarregar(){ filtroModalAtivo=''; sCampo=''; carregarEscala(cicloAtual); }
+function loading(s){ var el=document.getElementById('loading'); s?el.classList.add('on'):el.classList.remove('on'); }
+function mostrarMsg(msg,ok){ var el=document.getElementById('msgGlobal'); el.textContent=msg; el.className='msg '+(ok?'ok':'err'); setTimeout(function(){ el.className='msg'; },4000); }
+function esc(v){ if(v===null||v===undefined)return''; return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fecharModal(id){ document.getElementById(id).classList.remove('show'); }
+
+function iniciar(){
+  loading(true);
+  Promise.all([
+    api({action:'getCiclos'}),
+    api({action:'listarTransportadoras'})
+  ]).then(function(res){
+    var ciclos=res[0].data||[];
+    transps=res[1].data||[];
+    var sel=document.getElementById('selCiclo');
+    sel.innerHTML='';
+    ciclos.forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+    cicloAtual=ciclos[0]||'AM';
+    preencherSelectsTransp(transps);
+    carregarDrivers();
+    carregarEscala(cicloAtual);
+  }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
+}
+
+function trocarCiclo(){ cicloAtual=document.getElementById('selCiclo').value; filtroModalAtivo=''; sCampo=''; document.getElementById('filtroModal').value=''; carregarEscala(cicloAtual); }
+function onFiltroTranspChange(){ filtrar(); atualizarDatalistsTabela(); }
+
+function carregarDrivers(){
+  var transp=(usuario&&usuario.grupo==='Transportadora'&&usuario.transportadora)?usuario.transportadora:'';
+  api({action:'listarDrivers', transportadora:transp}).then(function(res){
+    todosDrivers=res.data||[];
+    if(transp){ todosDrivers=todosDrivers.filter(function(d){ return String(d.transportadora||'').trim().toLowerCase()===transp.trim().toLowerCase(); }); }
+    atualizarDatalistsTabela();
+  }).catch(function(){ todosDrivers=[]; });
+}
+
+function carregarEscala(ciclo){
+  loading(true); statusMap={};
+  Promise.all([
+    api({action:'getEscalaTransportadora', ciclo:ciclo}),
+    api({action:'getTransportadoraStatus', ciclo:ciclo})
+  ]).then(function(res){
+    var dados=res[0].data||res[0]||[];
+    statusMap=res[1].data||res[1]||{};
+    dadosBrutos=dados;
+    if(usuario&&usuario.grupo==='Transportadora'&&usuario.transportadora){
+      dadosBrutos=dadosBrutos.filter(function(d){ return String(d.transportadora||'').trim().toLowerCase()===String(usuario.transportadora).trim().toLowerCase(); });
+    }
+    popularFiltroTransp(dadosBrutos);
+    filtrar();
+    loading(false);
+  }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
+}
+
+function popularFiltroTransp(dados){
+  var sel=document.getElementById('filtroTransp'); var atual=sel.value;
+  sel.innerHTML='<option value="">Todas as transportadoras</option>';
+  var vis={};
+  dados.forEach(function(d){ var t=String(d.transportadora||'').trim(); if(t&&!vis[t]){ vis[t]=true; var o=document.createElement('option'); o.value=t; o.textContent=t; sel.appendChild(o); } });
+  if(atual) sel.value=atual;
+}
+
+function preencherSelectsTransp(lista){
+  var sel=document.getElementById('d_transp');
+  sel.innerHTML=lista.map(function(t){ return '<option value="'+t+'">'+t+'</option>'; }).join('');
+  if(usuario&&usuario.grupo==='Transportadora'&&usuario.transportadora){ sel.value=usuario.transportadora; sel.disabled=true; }
+}
+
+function getDriversFiltrados(){
+  if(usuario&&usuario.grupo==='Transportadora'&&usuario.transportadora){
+    return todosDrivers.filter(function(d){ return String(d.transportadora||'').trim().toLowerCase()===String(usuario.transportadora).trim().toLowerCase(); });
   }
-  function api(params){ return fetch(API,{method:'POST',body:JSON.stringify(params)}).then(function(r){return r.json();}); }
+  var fT=document.getElementById('filtroTransp').value;
+  if(!fT) return todosDrivers;
+  return todosDrivers.filter(function(d){ return String(d.transportadora||'').trim().toLowerCase()===fT.toLowerCase(); });
+}
 
-  function iniciar(){
-    loading(true);
-    Promise.all([
-      api({action:'getCiclos'}),
-      api({action:'listarTransportadoras'})
-    ]).then(function(res){
-      var ciclos = res[0].data||[];
-      transportadoras = res[1].data||[];
-      var sel = document.getElementById('selCiclo');
-      sel.innerHTML='';
-      ciclos.forEach(function(c){
-        var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);
-      });
-      cicloAtual = ciclos[0]||'AM';
-      preencherSelTransp();
-      carregarEscala();
-    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
-  }
+function atualizarDatalistsTabela(){
+  var drivers=getDriversFiltrados();
+  var dlPlaca=document.getElementById('dl-placas');
+  var dlDriver=document.getElementById('dl-drivers');
+  if(!dlPlaca||!dlDriver) return;
+  dlPlaca.innerHTML=''; dlDriver.innerHTML='';
+  drivers.forEach(function(d){
+    if(d.placa){ var op=document.createElement('option'); op.value=d.placa; dlPlaca.appendChild(op); }
+    if(d.nome){ var on=document.createElement('option'); on.value=d.nome; dlDriver.appendChild(on); }
+  });
+}
 
-  function preencherSelTransp(){
-    ['v-transp','m-transp'].forEach(function(id){
-      var sel=document.getElementById(id);
-      sel.innerHTML='<option value="">Selecionar...</option>';
-      transportadoras.forEach(function(t){
-        var o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);
-      });
+function filtrar(){
+  var fT=document.getElementById('filtroTransp').value;
+  var fM=document.getElementById('filtroModal').value.trim().toLowerCase();
+  var fR=document.getElementById('filtroTexto').value.trim().toLowerCase();
+  var modalFiltro=fM||filtroModalAtivo.toLowerCase();
+  dadosFiltrados=dadosBrutos.filter(function(d){
+    if(fT&&String(d.transportadora||'').trim()!==fT) return false;
+    if(modalFiltro&&String(d.tipo_veiculo||'').toLowerCase().indexOf(modalFiltro)===-1) return false;
+    if(fR){ var txt=[d.rota,d.otimizada,d.cidade,d.bairro,d.transportadora,d.projeto,d.tipo_veiculo].join(' ').toLowerCase(); if(txt.indexOf(fR)===-1) return false; }
+    return true;
+  });
+  if(sCampo){
+    dadosFiltrados.sort(function(a,b){
+      var va=String(a[sCampo]||'').toLowerCase(), vb=String(b[sCampo]||'').toLowerCase();
+      var na=parseFloat(va), nb=parseFloat(vb);
+      if(!isNaN(na)&&!isNaN(nb)) return sAsc?na-nb:nb-na;
+      var c=va<vb?-1:va>vb?1:0; return sAsc?c:-c;
     });
   }
+  atualizarCardsModal();
+  atualizarDatalistsTabela();
+  renderTabela();
+}
 
-  function trocarCiclo(){
-    cicloAtual=document.getElementById('selCiclo').value;
-    carregarEscala();
+function sortBy(campo){ if(sCampo===campo) sAsc=!sAsc; else{ sCampo=campo; sAsc=true; } filtrar(); }
+function filtrarPorCard(tipo){ filtroModalAtivo=(filtroModalAtivo===tipo)?'':tipo; document.getElementById('filtroModal').value=''; filtrar(); }
+
+function atualizarCardsModal(){
+  var contagem={};
+  dadosFiltrados.forEach(function(d){ var tipo=String(d.tipo_veiculo||'').trim()||'Sem tipo'; if(!contagem[tipo])contagem[tipo]=0; contagem[tipo]++; });
+  var html='<div class="card-modal total" onclick="filtrarPorCard(\'\')">'
+    +'<div class="card-modal-v">'+dadosFiltrados.length+'</div>'
+    +'<div class="card-modal-l">Total Rotas</div></div>'
+    +'<div class="card-divider"></div>';
+  Object.keys(contagem).sort(function(a,b){ return contagem[b]-contagem[a]; }).forEach(function(tipo){
+    var ativo=filtroModalAtivo===tipo?' ativo':'';
+    var label=tipo.length>18?tipo.substring(0,18)+'...':tipo;
+    html+='<div class="card-modal'+ativo+'" title="'+tipo+'" onclick="filtrarPorCard(\''+tipo.replace(/'/g,"\\'")+'\')"><div class="card-modal-v">'+contagem[tipo]+'</div><div class="card-modal-l">'+label+'</div></div>';
+  });
+  document.getElementById('cards-modal').innerHTML=html;
+}
+
+function aplicarVisibilidadeColunas(){
+  var ths=document.querySelectorAll('#thead-row th');
+  ths.forEach(function(th,i){ th.style.display=(COLUNAS[i]&&!COLUNAS[i].vis)?'none':''; });
+  var trs=document.querySelectorAll('#tbody tr');
+  trs.forEach(function(tr){
+    var tds=tr.querySelectorAll('td');
+    tds.forEach(function(td,i){ td.style.display=(COLUNAS[i]&&!COLUNAS[i].vis)?'none':''; });
+  });
+}
+
+function renderTabela(){
+  var tbody=document.getElementById('tbody');
+  var podeEditar=usuario&&(usuario.grupo==='LM'||usuario.grupo==='Admin'||usuario.grupo==='Transportadora');
+  if(!dadosFiltrados.length){ tbody.innerHTML='<tr><td colspan="18" style="text-align:center;padding:20px;color:#aaa">Nenhuma rota encontrada.</td></tr>'; return; }
+  var html='<datalist id="dl-placas"></datalist><datalist id="dl-drivers"></datalist>';
+  dadosFiltrados.forEach(function(d,i){
+    var isHybrid=String(d.projeto||'').toLowerCase().indexOf('hybrid')>-1;
+    var projeto=(isHybrid?'💰 ':'')+esc(d.projeto);
+    var placa=podeEditar?'<input class="edit" list="dl-placas" data-idx="'+i+'" data-field="placa" value="'+esc(d.placa||'')+'" onchange="mudaPlaca('+i+',this.value)" />':esc(d.placa||'');
+    var driver=podeEditar?'<input class="edit" list="dl-drivers" data-idx="'+i+'" data-field="driver" value="'+esc(d.driver||'')+'" onchange="mudaDriver('+i+',this.value)" />':esc(d.driver||'');
+    var stRota=d.rota||''; var stStatus=statusMap[stRota]||'';
+    var btnStatus='';
+    if(podeEditar){ btnStatus=stStatus==='carregado'?'<button class="btn-status-ok" onclick="toggleStatus(\''+stRota.replace(/'/g,"\\'")+'\',\'pendente\')">✅ Carregado</button>':'<button class="btn-status-pend" onclick="toggleStatus(\''+stRota.replace(/'/g,"\\'")+'\',\'carregado\')">🟡 Pendente</button>'; }
+    else{ btnStatus=stStatus==='carregado'?'✅ Carregado':'🟡 Pendente'; }
+    html+='<tr>'
+      +'<td>'+esc(d.rota)+'</td><td>'+esc(d.otimizada)+'</td><td>'+esc(d.pacotes)+'</td>'
+      +'<td>'+esc(d.parada)+'</td><td>'+esc(d.tipo_veiculo)+'</td><td>'+esc(d.ocup_volumosos)+'</td>'
+      +'<td>'+esc(d.bairro)+'</td><td>'+esc(d.cidade)+'</td><td>'+projeto+'</td>'
+      +'<td>'+esc(d.giro)+'</td><td>'+esc(d.area)+'</td><td>'+esc(d.doca)+'</td>'
+      +'<td>'+esc(d.roteiro)+'</td><td>'+placa+'</td><td>'+driver+'</td>'
+      +'<td>'+esc(d.transportadora)+'</td>'
+      +'<td style="text-align:center">'+btnStatus+'</td>'
+      +'<td><button class="btn btn-purple" style="padding:4px 10px;font-size:0.75rem" onclick="abrirDetalhe('+i+')">📦 Detalhe</button></td>'
+    +'</tr>';
+  });
+  tbody.innerHTML=html;
+  atualizarDatalistsTabela();
+  aplicarVisibilidadeColunas();
+}
+
+function mudaPlaca(idx,placa){
+  if(dadosFiltrados[idx]) dadosFiltrados[idx].placa=placa; sincronizarBrutos(idx);
+  var driver=todosDrivers.filter(function(d){ return d.placa===placa; })[0];
+  if(driver){ dadosFiltrados[idx].driver=driver.nome; sincronizarBrutos(idx); var inputs=document.querySelectorAll('input.edit[data-field="driver"]'); if(inputs[idx]) inputs[idx].value=driver.nome; }
+}
+
+function mudaDriver(idx,nome){
+  if(dadosFiltrados[idx]) dadosFiltrados[idx].driver=nome; sincronizarBrutos(idx);
+  var driver=todosDrivers.filter(function(d){ return d.nome===nome; })[0];
+  if(driver){ dadosFiltrados[idx].placa=driver.placa; sincronizarBrutos(idx); var inputs=document.querySelectorAll('input.edit[data-field="placa"]'); if(inputs[idx]) inputs[idx].value=driver.placa; }
+}
+
+function sincronizarBrutos(idx){ var d=dadosFiltrados[idx]; if(!d)return; for(var i=0;i<dadosBrutos.length;i++){ if(dadosBrutos[i].rota===d.rota){ dadosBrutos[i].placa=d.placa; dadosBrutos[i].driver=d.driver; break; } } }
+
+function toggleStatus(rota,novoStatus){
+  loading(true);
+  api({action:'salvarTransportadoraStatus', ciclo:cicloAtual, rota:rota, status:novoStatus}).then(function(res){
+    loading(false);
+    if(res.ok){ statusMap[rota]=novoStatus; renderTabela(); mostrarMsg(novoStatus==='carregado'?'✅ Marcado como carregado!':'↩️ Marcado como pendente.',true); }
+    else{ mostrarMsg('❌ '+(res.msg||'Erro ao salvar status'),false); }
+  }).catch(function(e){ loading(false); mostrarMsg('❌ '+e.message,false); });
+}
+
+function abrirDetalhe(idx){
+  var d=dadosFiltrados[idx]; if(!d) return; loading(true);
+  document.getElementById('detalhe-titulo').textContent='📦 Detalhe — '+(d.otimizada||d.rota);
+  document.getElementById('detalhe-resumo').innerHTML='<span class="pill">Ciclo: '+cicloAtual+'</span><span class="pill">Rota: '+esc(d.rota)+'</span><span class="pill">Pacotes: '+esc(d.pacotes)+'</span><span class="pill">Cidade: '+esc(d.cidade)+'</span><span class="pill">Transp.: '+esc(d.transportadora)+'</span>'+(String(d.projeto||'').toLowerCase().indexOf('hybrid')>-1?'<span class="pill">💰 Híbrida</span>':'');
+  api({action:'getDetalheRota', ciclo:cicloAtual, rota:d.rota}).then(function(res){
+    loading(false);
+    var pacs=res.data||[];
+    var tbody=document.getElementById('tbody-detalhe');
+    if(!pacs.length){ tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:16px;color:#aaa">Sem pacotes.</td></tr>'; }
+    else{ var h=''; pacs.forEach(function(p){ h+='<tr><td>'+esc(p.rota)+'</td><td>'+esc(p.parada)+'</td><td>'+esc(p.shipment_id)+'</td><td>'+esc(p.cidade)+'</td><td>'+esc(p.bairro)+'</td><td>'+esc(p.cep)+'</td><td>'+esc(p.merchant_type)+'</td><td>'+esc(p.promessa_inicio)+'</td><td>'+esc(p.promessa_fim)+'</td></tr>'; }); tbody.innerHTML=h; }
+    document.getElementById('modalDetalhe').classList.add('show');
+  }).catch(function(e){ loading(false); mostrarMsg('Erro detalhe: '+e.message,false); });
+}
+
+function salvarEscala(){
+  var inputs=document.querySelectorAll('input.edit');
+  inputs.forEach(function(inp){ var idx=parseInt(inp.dataset.idx), field=inp.dataset.field; if(dadosFiltrados[idx]){ dadosFiltrados[idx][field]=inp.value; sincronizarBrutos(idx); } });
+  var headers=['Rota','Otimizada','Pacotes','Paradas','Tipo Veículo','% Ocup','Bairro','Cidade','Giro','Área','Doca','Roteiro','Placa','Driver','Transportadora'];
+  var linhas=[headers];
+  dadosBrutos.forEach(function(d){ linhas.push([d.rota||'',d.otimizada||'',d.pacotes||'',d.parada||'',d.tipo_veiculo||'',d.ocup_volumosos||'',d.bairro||'',d.cidade||'',d.giro||'',d.area||'',d.doca||'',d.roteiro||'',d.placa||'',d.driver||'',d.transportadora||'']); });
+  loading(true);
+  api({action:'salvarEscalaSalva', ciclo:cicloAtual, linhas:linhas}).then(function(res){
+    loading(false); mostrarMsg(res.ok?'✅ Salvo com sucesso!':'❌ '+(res.msg||'Erro'),res.ok);
+  }).catch(function(e){ loading(false); mostrarMsg('❌ Erro: '+e.message,false); });
+}
+
+function baixarTabela(){
+  if(!dadosFiltrados.length){ mostrarMsg('Nenhuma rota para baixar.',false); return; }
+  var campos=['rota','otimizada','pacotes','parada','tipo_veiculo','ocup_volumosos','bairro','cidade','projeto','giro','area','doca','roteiro','placa','driver','transportadora','status'];
+  var headers=[];
+  COLUNAS.forEach(function(col,i){ if(col.vis&&i<17) headers.push(col.label); });
+  var linhas=[headers];
+  dadosFiltrados.forEach(function(d){
+    var stStatus=statusMap[d.rota||'']||'';
+    var vals={rota:d.rota,otimizada:d.otimizada,pacotes:d.pacotes,parada:d.parada,tipo_veiculo:d.tipo_veiculo,ocup_volumosos:d.ocup_volumosos,bairro:d.bairro,cidade:d.cidade,projeto:d.projeto,giro:d.giro,area:d.area,doca:d.doca,roteiro:d.roteiro,placa:d.placa,driver:d.driver,transportadora:d.transportadora,status:stStatus==='carregado'?'Carregado':'Pendente'};
+    var row=[];
+    COLUNAS.forEach(function(col,i){ if(col.vis&&i<17) row.push(vals[campos[i]]||''); });
+    linhas.push(row);
+  });
+  var csv=linhas.map(function(row){ return row.map(function(cel){ return '"'+String(cel).replace(/"/g,'""')+'"'; }).join(';'); }).join('\n');
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var link=document.createElement('a');
+  link.href=url;
+  link.download=((usuario&&usuario.transportadora)?usuario.transportadora:'escala')+'_'+cicloAtual+'.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+  mostrarMsg('✅ Arquivo baixado!',true);
+}
+
+function abrirModalDriver(driver){
+  document.getElementById('driver-titulo').textContent=driver?'✏️ Editar Driver':'👨‍✈️ Cadastrar Driver';
+  document.getElementById('d_nome').value=driver?driver.nome:'';
+  document.getElementById('d_placa').value=driver?driver.placa:'';
+  document.getElementById('d_modal').value=driver?driver.modal:'';
+  if(driver) document.getElementById('d_transp').value=driver.transportadora;
+  document.getElementById('modalDriver').classList.add('show');
+}
+
+function salvarDriver(){
+  var nome=document.getElementById('d_nome').value.trim();
+  var placa=document.getElementById('d_placa').value.trim();
+  var modal=document.getElementById('d_modal').value.trim();
+  var transp=document.getElementById('d_transp').value;
+  if(!nome){ mostrarMsg('⚠️ Informe o nome.',false); return; }
+  if(!placa){ mostrarMsg('⚠️ Informe a placa.',false); return; }
+  loading(true);
+  api({action:'salvarDriver', nome:nome, placa:placa, modal:modal, transportadora:transp}).then(function(res){
+    loading(false);
+    if(res.ok){ fecharModal('modalDriver'); mostrarMsg('✅ '+(res.msg||'Driver salvo!'),true); carregarDrivers(); }
+    else{ mostrarMsg('❌ '+(res.msg||'Erro'),false); }
+  }).catch(function(e){ loading(false); mostrarMsg('❌ '+e.message,false); });
+}
+
+function excluirDriver(nome){
+  if(!confirm('Excluir o driver '+nome+'?')) return;
+  loading(true);
+  api({action:'excluirDriver', nome:nome}).then(function(res){
+    loading(false); mostrarMsg(res.ok?'✅ Driver excluído.':'❌ '+(res.msg||'Erro'),res.ok);
+    carregarDrivers();
+    setTimeout(function(){ abrirListaDrivers(); },500);
+  }).catch(function(e){ loading(false); mostrarMsg('❌ '+e.message,false); });
+}
+
+function abrirListaDrivers(){
+  document.getElementById('busca-driver').value='';
+  var lista=todosDrivers;
+  if(usuario&&usuario.grupo==='Transportadora'&&usuario.transportadora){
+    lista=todosDrivers.filter(function(d){ return String(d.transportadora||'').trim().toLowerCase()===String(usuario.transportadora).trim().toLowerCase(); });
   }
+  renderListaDrivers(lista);
+  document.getElementById('modalListaDrivers').classList.add('show');
+}
 
-  function carregarEscala(){
-    loading(true);
-    api({action:'getEscalaTransportadora', ciclo:cicloAtual}).then(function(res){
-      dadosEscala = res.data||res||[];
-      renderTabela();
-      loading(false);
-    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
+function filtrarListaDrivers(){
+  var busca=document.getElementById('busca-driver').value.trim().toLowerCase();
+  var base=todosDrivers;
+  if(usuario&&usuario.grupo==='Transportadora'&&usuario.transportadora){
+    base=todosDrivers.filter(function(d){ return String(d.transportadora||'').trim().toLowerCase()===String(usuario.transportadora).trim().toLowerCase(); });
   }
+  renderListaDrivers(base.filter(function(d){ return [d.nome,d.placa,d.modal,d.transportadora].join(' ').toLowerCase().indexOf(busca)>-1; }));
+}
 
-  function renderTabela(){
-    var fRota = document.getElementById('filtroRota').value.toLowerCase();
-    var filtrado = dadosEscala.filter(function(d){
-      if(isTransp && d.transportadora !== usuario.transportadora) return false;
-      if(fRota && String(d.rota||'').toLowerCase().indexOf(fRota)===-1 &&
-         String(d.otimizada||'').toLowerCase().indexOf(fRota)===-1) return false;
-      return true;
-    });
-    var html='';
-    filtrado.forEach(function(d){
-      var podeEditar = !isTransp || d.transportadora === usuario.transportadora;
-      html+='<tr>'
-        +'<td>'+e(d.rota)+'</td>'
-        +'<td>'+e(d.otimizada)+'</td>'
-        +'<td>'+e(d.pacotes)+'</td>'
-        +'<td>'+e(d.parada)+'</td>'
-        +'<td>'+e(d.tipo_veiculo)+'</td>'
-        +'<td>'+e(d.ocup_volumosos)+'</td>'
-        +'<td>'+e(d.bairro)+'</td>'
-        +'<td>'+e(d.cidade)+'</td>'
-        +'<td>'+e(d.giro)+'</td>'
-        +'<td>'+e(d.doca)+'</td>'
-        +'<td>'+e(d.roteiro)+'</td>'
-        +'<td>'+e(d.transportadora)+'</td>'
-        +'<td>'+(podeEditar?'<input class="inp-edit" data-rota="'+e(d.rota)+'" data-field="Placa" value="'+e(d.placa||'')+'" placeholder="Placa">':e(d.placa||'-'))+'</td>'
-        +'<td>'+(podeEditar?'<input class="inp-edit" data-rota="'+e(d.rota)+'" data-field="Driver" value="'+e(d.driver||'')+'" placeholder="Motorista">':e(d.driver||'-'))+'</td>'
-      +'</tr>';
-    });
-    document.getElementById('tbody').innerHTML = html||'<tr><td colspan="14" style="text-align:center;padding:24px;color:#aaa">Nenhuma rota encontrada.</td></tr>';
-  }
+function renderListaDrivers(lista){
+  var tbody=document.getElementById('tbody-drivers');
+  if(!lista.length){ tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#aaa;padding:16px">Nenhum driver cadastrado.</td></tr>'; return; }
+  var html='';
+  lista.forEach(function(d){
+    var nomeEsc=esc(d.nome).replace(/'/g,"&#39;");
+    html+='<tr><td>'+esc(d.nome)+'</td><td>'+esc(d.placa)+'</td><td>'+esc(d.modal)+'</td><td>'+esc(d.transportadora)+'</td>'
+      +'<td style="text-align:center;white-space:nowrap">'
+      +'<button class="btn-edit-sm" onclick="editarDriver(\''+nomeEsc+'\')">✏️ Editar</button>'
+      +'<button class="btn-del-sm" onclick="excluirDriver(\''+nomeEsc+'\')">🗑️ Excluir</button>'
+      +'</td></tr>';
+  });
+  tbody.innerHTML=html;
+}
 
-  function salvar(){
-    loading(true);
-    var linhas = [['Rota','Placa','Driver']];
-    document.querySelectorAll('.inp-edit[data-field="Placa"]').forEach(function(inp){
-      var rota = inp.dataset.rota;
-      var placa = inp.value.trim();
-      var driver = '';
-      var driverInp = document.querySelector('.inp-edit[data-rota="'+rota+'"][data-field="Driver"]');
-      if(driverInp) driver = driverInp.value.trim();
-      linhas.push([rota, placa, driver]);
-    });
-    api({action:'salvarEscalaSalva', ciclo:cicloAtual, linhas:linhas}).then(function(res){
-      loading(false);
-      mostrarMsg(res.ok?'✅ Salvo com sucesso!':'❌ Erro ao salvar.',res.ok);
-    }).catch(function(e){ loading(false); mostrarMsg('Erro: '+e.message,false); });
-  }
+function editarDriver(nome){ var driver=todosDrivers.filter(function(d){ return d.nome===nome; })[0]; if(!driver)return; fecharModal('modalListaDrivers'); abrirModalDriver(driver); }
 
-  function baixarCSV(){
-    var rows = [['Rota otimizada','Rota original','Giro','Vaga','Tipo de veículo','Transportadora','Placa','Driver']];
-    dadosEscala.forEach(function(d){
-      if(isTransp && d.transportadora !== usuario.transportadora) return;
-      rows.push([d.otimizada||'',d.rota||'',d.giro||'',d.doca||'',d.tipo_veiculo||'',d.transportadora||'',d.placa||'',d.driver||'']);
-    });
-    var csv = rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
-    var blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'transportadoras_'+cicloAtual+'.csv';
-    a.click();
-  }
+function abrirModalColunas(){
+  var lista=document.getElementById('lista-colunas'); lista.innerHTML='';
+  COLUNAS.forEach(function(col,i){
+    var div=document.createElement('div'); div.className='col-toggle-item';
+    div.innerHTML='<input type="checkbox" id="col_'+i+'" '+(col.vis?'checked':'')+' onchange="toggleColuna('+i+',this.checked)"><label for="col_'+i+'">'+col.label+'</label>';
+    lista.appendChild(div);
+  });
+  document.getElementById('modalColunas').classList.add('show');
+}
 
-  function abrirModalVeiculo(){ document.getElementById('modalVeiculo').className='modal-bg show'; }
-  function abrirModalMotorista(){ document.getElementById('modalMotorista').className='modal-bg show'; }
-  function fecharModal(id){ document.getElementById(id).className='modal-bg'; }
+function toggleColuna(idx,vis){ COLUNAS[idx].vis=vis; aplicarVisibilidadeColunas(); }
+function marcarTodasColunas(vis){ COLUNAS.forEach(function(c){ c.vis=vis; }); document.querySelectorAll('#lista-colunas input[type=checkbox]').forEach(function(c){ c.checked=vis; }); aplicarVisibilidadeColunas(); }
 
-  function salvarVeiculo(){
-    var placa=document.getElementById('v-placa').value.trim();
-    var tipo=document.getElementById('v-tipo').value.trim();
-    var transp=document.getElementById('v-transp').value.trim();
-    if(!placa||!transp){mostrarMsg('⚠️ Preencha placa e transportadora.',false);return;}
-    loading(true);
-    api({action:'cadastrarVeiculo',placa:placa,tipo:tipo,transportadora:transp}).then(function(res){
-      loading(false);fecharModal('modalVeiculo');
-      mostrarMsg(res.ok?'✅ Veículo cadastrado!':'❌ Erro.',res.ok);
-    }).catch(function(e){loading(false);mostrarMsg('Erro: '+e.message,false);});
-  }
-
-  function salvarMotorista(){
-    var nome=document.getElementById('m-nome').value.trim();
-    var cpf=document.getElementById('m-cpf').value.trim();
-    var transp=document.getElementById('m-transp').value.trim();
-    if(!nome||!transp){mostrarMsg('⚠️ Preencha nome e transportadora.',false);return;}
-    loading(true);
-    api({action:'cadastrarMotorista',nome:nome,cpf:cpf,transportadora:transp}).then(function(res){
-      loading(false);fecharModal('modalMotorista');
-      mostrarMsg(res.ok?'✅ Motorista cadastrado!':'❌ Erro.',res.ok);
-    }).catch(function(e){loading(false);mostrarMsg('Erro: '+e.message,false);});
-  }
-
-  function e(v){
-    if(v===null||v===undefined)return'';
-    return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  iniciar();
+window.addEventListener('load', iniciar);
 </script>
 </body>
 </html>
+
+  

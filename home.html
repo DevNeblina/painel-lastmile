@@ -144,32 +144,32 @@
     </div>
   </div>
 
-  <!-- OPERAÇÃO -->
-  <div id="cards-operacao" style="display:none">
-    <div class="secao">⚙️ Operação</div>
-    <div class="grid">
-      <a class="card" href="mapa.html">
-        <div class="card-icon">🗺️</div>
-        <div class="card-title">Mapa de Expedição</div>
-        <div class="card-desc">Visualize o mapa de vagas por área e giro</div>
-      </a>
-      <a class="card" href="escalavagas.html">
-        <div class="card-icon">🪑</div>
-        <div class="card-title">Escala de Vagas</div>
-        <div class="card-desc">Aloque colaboradores e horários de almoço por vaga</div>
-      </a>
-      <a class="card" href="controlealmoco.html">
-        <div class="card-icon">🍽️</div>
-        <div class="card-title">Controle de Almoço</div>
-        <div class="card-desc">Registre saídas e retornos do almoço</div>
-      </a>
-      <a class="card" href="colaboradores.html">
-        <div class="card-icon">👥</div>
-        <div class="card-title">Colaboradores</div>
-        <div class="card-desc">Cadastre e importe colaboradores</div>
-      </a>
-    </div>
+<!-- OPERAÇÃO -->
+<div id="cards-operacao" style="display:none">
+  <div class="secao">⚙️ Operação</div>
+  <div class="grid">
+    <a class="card" href="mapa.html">
+      <div class="card-icon">🗺️</div>
+      <div class="card-title">Mapa de Expedição</div>
+      <div class="card-desc">Visualize o mapa de vagas por área e giro</div>
+    </a>
+    <a class="card" href="escalavagas.html">
+      <div class="card-icon">🪑</div>
+      <div class="card-title">Escala de Vagas</div>
+      <div class="card-desc">Aloque colaboradores e horários de almoço por vaga</div>
+    </a>
+    <a class="card" href="controlealmoco.html">
+      <div class="card-icon">🍽️</div>
+      <div class="card-title">Controle de Almoço</div>
+      <div class="card-desc">Registre saídas e retornos do almoço</div>
+    </a>
+    <a class="card" href="colaboradores.html">
+      <div class="card-icon">👥</div>
+      <div class="card-title">Colaboradores</div>
+      <div class="card-desc">Cadastre e importe colaboradores</div>
+    </a>
   </div>
+</div>
 
   <!-- TRANSPORTADORA -->
   <div id="cards-transp" style="display:none">
@@ -210,7 +210,7 @@
 
   if      (grupo === 'Admin')         document.getElementById('cards-admin').style.display    = 'block';
   else if (grupo === 'LM')            document.getElementById('cards-lm').style.display       = 'block';
-  else if (grupo === 'Operação')      document.getElementById('cards-operacao').style.display = 'block';
+  else if (grupo === 'Operação' || grupo === 'Operacao') document.getElementById('cards-operacao').style.display = 'block';
   else if (grupo === 'Transportadora')document.getElementById('cards-transp').style.display   = 'block';
   else                                document.getElementById('cards-lm').style.display       = 'block';
 

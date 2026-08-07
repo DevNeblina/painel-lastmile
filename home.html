@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" type="image/png" href="https://cdn.iconscout.com/icon/free/png-256/free-mercado-livre-icon-svg-download-png-14549372.png">
+  <link rel="icon" type="image/png" href="https://i.ibb.co/wZFtfWJc/mercado-envios-logo-4.png">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Home — Painel Last Mile</title>
   <style>
@@ -24,6 +24,11 @@
     .card-title{font-size:14px;font-weight:800;color:#333}
     .card-desc{font-size:11px;color:#888;line-height:1.5}
     .secao{font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.6px;margin:24px 0 10px}
+    .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;margin-left:6px}
+    .badge-admin{background:#fef3c7;color:#92400e}
+    .badge-lm{background:#dbeafe;color:#1e40af}
+    .badge-op{background:#dcfce7;color:#166534}
+    .badge-transp{background:#f3e8ff;color:#6b21a8}
   </style>
 </head>
 <body>
@@ -40,7 +45,8 @@
     <p>Selecione um módulo para continuar</p>
   </div>
 
-  <div id="cards-lm" style="display:none">
+  <!-- ADMIN -->
+  <div id="cards-admin" style="display:none">
     <div class="secao">📋 Operação</div>
     <div class="grid">
       <a class="card" href="escala.html">
@@ -91,6 +97,81 @@
     </div>
   </div>
 
+  <!-- LM -->
+  <div id="cards-lm" style="display:none">
+    <div class="secao">📋 Operação</div>
+    <div class="grid">
+      <a class="card" href="escala.html">
+        <div class="card-icon">📊</div>
+        <div class="card-title">Escala</div>
+        <div class="card-desc">Visualize e gerencie a escala de carregamento</div>
+      </a>
+      <a class="card" href="mapa.html">
+        <div class="card-icon">🗺️</div>
+        <div class="card-title">Mapa de Expedição</div>
+        <div class="card-desc">Visualize o mapa de vagas por área e giro</div>
+      </a>
+      <a class="card" href="escalavagas.html">
+        <div class="card-icon">🪑</div>
+        <div class="card-title">Escala de Vagas</div>
+        <div class="card-desc">Aloque colaboradores e horários de almoço por vaga</div>
+      </a>
+      <a class="card" href="controlealmoco.html">
+        <div class="card-icon">🍽️</div>
+        <div class="card-title">Controle de Almoço</div>
+        <div class="card-desc">Registre saídas e retornos do almoço</div>
+      </a>
+      <a class="card" href="colaboradores.html">
+        <div class="card-icon">👥</div>
+        <div class="card-title">Colaboradores</div>
+        <div class="card-desc">Cadastre e importe colaboradores</div>
+      </a>
+      <a class="card" href="transportadoras.html">
+        <div class="card-icon">🚛</div>
+        <div class="card-title">Transportadoras</div>
+        <div class="card-desc">Gerencie transportadoras, placas e motoristas</div>
+      </a>
+      <a class="card" href="romaneio.html">
+        <div class="card-icon">📋</div>
+        <div class="card-title">Romaneio</div>
+        <div class="card-desc">Visualize e imprima romaneios por rota</div>
+      </a>
+      <a class="card" href="listame.html">
+        <div class="card-icon">📝</div>
+        <div class="card-title">Lista ME</div>
+        <div class="card-desc">Consulte a lista de motoristas e entregas</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- OPERAÇÃO -->
+  <div id="cards-operacao" style="display:none">
+    <div class="secao">⚙️ Operação</div>
+    <div class="grid">
+      <a class="card" href="mapa.html">
+        <div class="card-icon">🗺️</div>
+        <div class="card-title">Mapa de Expedição</div>
+        <div class="card-desc">Visualize o mapa de vagas por área e giro</div>
+      </a>
+      <a class="card" href="escalavagas.html">
+        <div class="card-icon">🪑</div>
+        <div class="card-title">Escala de Vagas</div>
+        <div class="card-desc">Aloque colaboradores e horários de almoço por vaga</div>
+      </a>
+      <a class="card" href="controlealmoco.html">
+        <div class="card-icon">🍽️</div>
+        <div class="card-title">Controle de Almoço</div>
+        <div class="card-desc">Registre saídas e retornos do almoço</div>
+      </a>
+      <a class="card" href="colaboradores.html">
+        <div class="card-icon">👥</div>
+        <div class="card-title">Colaboradores</div>
+        <div class="card-desc">Cadastre e importe colaboradores</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- TRANSPORTADORA -->
   <div id="cards-transp" style="display:none">
     <div class="secao">🚛 Transportadora</div>
     <div class="grid">
@@ -107,22 +188,6 @@
     </div>
   </div>
 
-  <div id="cards-operacao" style="display:none">
-    <div class="secao">⚙️ Operação</div>
-    <div class="grid">
-      <a class="card" href="mapa.html">
-        <div class="card-icon">🗺️</div>
-        <div class="card-title">Mapa de Expedição</div>
-        <div class="card-desc">Visualize o mapa de expedição</div>
-      </a>
-      <a class="card" href="controlealmoco.html">
-        <div class="card-icon">🍽️</div>
-        <div class="card-title">Controle de Almoço</div>
-        <div class="card-desc">Registre saídas e retornos do almoço</div>
-      </a>
-    </div>
-  </div>
-
 </div>
 <script>
   var usuario = null;
@@ -130,20 +195,28 @@
   if (!usuario || !usuario.email) { window.location.href='index.html'; }
 
   var grupo = (usuario && usuario.grupo) || '';
-  document.getElementById('span-usuario').textContent = usuario.email + ' (' + grupo + ')';
-  document.getElementById('txt-boas-vindas').textContent = 'Bem-vindo, ' + usuario.email.split('@')[0] + '!';
+  var nomeExib = usuario.email.split('@')[0];
 
-  if (grupo === 'LM' || grupo === 'Admin') {
-    document.getElementById('cards-lm').style.display = 'block';
-  } else if (grupo === 'Transportadora') {
-    document.getElementById('cards-transp').style.display = 'block';
-  } else {
-    document.getElementById('cards-operacao').style.display = 'block';
-  }
+  var badgeClass = {
+    'Admin':        'badge-admin',
+    'LM':           'badge-lm',
+    'Operação':     'badge-op',
+    'Transportadora':'badge-transp'
+  }[grupo] || 'badge-lm';
 
-  function sair() {
+  document.getElementById('span-usuario').innerHTML =
+    nomeExib + ' <span class="badge ' + badgeClass + '">' + grupo + '</span>';
+  document.getElementById('txt-boas-vindas').textContent = 'Bem-vindo, ' + nomeExib + '!';
+
+  if      (grupo === 'Admin')         document.getElementById('cards-admin').style.display    = 'block';
+  else if (grupo === 'LM')            document.getElementById('cards-lm').style.display       = 'block';
+  else if (grupo === 'Operação')      document.getElementById('cards-operacao').style.display = 'block';
+  else if (grupo === 'Transportadora')document.getElementById('cards-transp').style.display   = 'block';
+  else                                document.getElementById('cards-lm').style.display       = 'block';
+
+  function sair(){
     sessionStorage.removeItem('usuario');
-    window.location.href = 'index.html';
+    window.location.href='index.html';
   }
 </script>
 </body>

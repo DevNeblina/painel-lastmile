@@ -97,8 +97,7 @@
     .mapa-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #f8fafc; font-size: 13px; color: #64748b; border-radius: 8px; z-index: 10; text-align: center; padding: 20px; }
   </style>
 </head>
-
-  <body>
+<body>
 <div id="loading"><div class="spinner"></div><span>Carregando...</span></div>
 <div id="msgGlobal" class="msg"></div>
 
@@ -238,7 +237,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <script>
+  <script>
 var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
 var usuario = null;
 try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
@@ -269,11 +268,10 @@ function fecharModal(id){
   if(id==='modalMapa'){
     mapaRequisicaoAtiva=false;
     if(mapaLeaflet){ mapaLeaflet.remove(); mapaLeaflet=null; }
-    // Reseta completamente o container do mapa
-    var wrap=document.getElementById('mapa-leaflet');
+    var velho=document.getElementById('mapa-leaflet');
     var novo=document.createElement('div');
     novo.id='mapa-leaflet';
-    wrap.parentNode.replaceChild(novo,wrap);
+    velho.parentNode.replaceChild(novo,velho);
     document.getElementById('mapa-loading').style.display='flex';
     document.getElementById('mapa-loading').textContent='⏳ Carregando paradas...';
     document.getElementById('mapa-stats').innerHTML='';
@@ -448,7 +446,7 @@ function renderTabela(){
   aplicarVisibilidadeColunas();
 }
 
-      function mudaPlaca(idx,placa){
+function mudaPlaca(idx,placa){
   if(dadosFiltrados[idx]) dadosFiltrados[idx].placa=placa; sincronizarBrutos(idx);
   var driver=todosDrivers.filter(function(d){ return d.placa===placa; })[0];
   if(driver){ dadosFiltrados[idx].driver=driver.nome; sincronizarBrutos(idx); var inputs=document.querySelectorAll('input.edit[data-field="driver"]'); if(inputs[idx]) inputs[idx].value=driver.nome; }
@@ -489,7 +487,7 @@ function abrirDetalhe(idx){
 function abrirMapa(idx){
   var d=dadosFiltrados[idx]; if(!d) return;
 
-  // Reset completo do estado
+  // Reset completo
   mapaRequisicaoAtiva=false;
   if(mapaLeaflet){ mapaLeaflet.remove(); mapaLeaflet=null; }
   var velho=document.getElementById('mapa-leaflet');
@@ -497,46 +495,49 @@ function abrirMapa(idx){
   novo.id='mapa-leaflet';
   velho.parentNode.replaceChild(novo,velho);
 
-  // Reset UI
   document.getElementById('mapa-titulo').textContent='🗺️ Mapa — '+(d.otimizada||d.rota);
   document.getElementById('mapa-stats').innerHTML='';
   var loadEl=document.getElementById('mapa-loading');
   loadEl.style.display='flex';
   loadEl.textContent='⏳ Buscando pacotes da rota...';
-
-  // Abre modal
   document.getElementById('modalMapa').classList.add('show');
 
-  // Marca requisição ativa
   var reqId=Date.now();
   mapaRequisicaoAtiva=reqId;
 
   api({action:'getDetalheRota', ciclo:cicloAtual, rota:d.rota}).then(function(res){
-    // Ignora se modal foi fechado ou nova rota foi aberta
     if(mapaRequisicaoAtiva!==reqId) return;
-
     var pacs=res.data||[];
-    if(!pacs.length){
-      loadEl.textContent='Sem pacotes para exibir no mapa.';
-      return;
-    }
+    if(!pacs.length){ loadEl.textContent='Sem pacotes para exibir no mapa.'; return; }
 
-    // Agrupa por CEP único mantendo menor parada
-    var cepMap={};
+    // Agrupa por PARADA — 1 pin por parada com 1 CEP representativo
+    var paradaMap={};
     pacs.forEach(function(p){
       var cep=String(p.cep||'').replace(/\D/g,'');
       var parada=parseInt(p.parada||999,10);
-      if(!cep) return;
-      if(!cepMap[cep]||parada<cepMap[cep].parada){
-        cepMap[cep]={cep:cep, parada:parada, bairro:p.bairro||'', cidade:p.cidade||''};
+      if(!paradaMap[parada]){
+        paradaMap[parada]={
+          cep:cep||'',
+          parada:parada,
+          bairro:p.bairro||'',
+          cidade:p.cidade||'',
+          total:1
+        };
+      } else {
+        paradaMap[parada].total++;
+        if(!paradaMap[parada].cep && cep) paradaMap[parada].cep=cep;
       }
     });
-    var cepsUnicos=Object.values(cepMap).sort(function(a,b){ return a.parada-b.parada; });
 
-    loadEl.textContent='⏳ Geocodificando '+cepsUnicos.length+' CEPs únicos... (pode levar alguns segundos)';
+    var paradas=Object.values(paradaMap)
+      .filter(function(p){ return !!p.cep; })
+      .sort(function(a,b){ return a.parada-b.parada; });
 
-    api({action:'geocodificarCeps', ceps:cepsUnicos}).then(function(geoRes){
-      // Ignora se modal foi fechado
+    if(!paradas.length){ loadEl.textContent='Sem CEPs válidos para geocodificar.'; return; }
+
+    loadEl.textContent='⏳ Geocodificando '+paradas.length+' paradas... (pode levar alguns segundos)';
+
+    api({action:'geocodificarCeps', ceps:paradas}).then(function(geoRes){
       if(mapaRequisicaoAtiva!==reqId) return;
 
       var coords=geoRes.data||[];
@@ -546,17 +547,16 @@ function abrirMapa(idx){
 
       if(!validos.length){
         loadEl.style.display='flex';
-        loadEl.textContent='❌ Não foi possível geocodificar os CEPs.';
+        loadEl.textContent='❌ Não foi possível geocodificar as paradas.';
         return;
       }
 
       document.getElementById('mapa-stats').innerHTML=
         '<span class="mapa-stat"><b>'+pacs.length+'</b> pacotes</span>'+
-        '<span class="mapa-stat"><b>'+cepsUnicos.length+'</b> CEPs únicos</span>'+
-        '<span class="mapa-stat"><b>'+validos.length+'</b> localizados</span>'+
+        '<span class="mapa-stat"><b>'+paradas.length+'</b> paradas</span>'+
+        '<span class="mapa-stat"><b>'+validos.length+'</b> localizadas</span>'+
         '<span class="mapa-stat">🚛 '+esc(d.transportadora||'Sem transp.')+'</span>';
 
-      // Inicializa mapa
       var mapaEl=document.getElementById('mapa-leaflet');
       mapaLeaflet=L.map(mapaEl,{zoomControl:true});
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
@@ -567,8 +567,8 @@ function abrirMapa(idx){
       validos.forEach(function(c){
         var icon=L.divIcon({
           className:'',
-          html:'<div style="background:#FFE600;color:#333;border:2px solid #333;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;box-shadow:0 2px 4px rgba(0,0,0,.3);line-height:1">'+c.parada+'</div>',
-          iconSize:[26,26], iconAnchor:[13,13], popupAnchor:[0,-13]
+          html:'<div style="background:#FFE600;color:#333;border:2px solid #333;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;box-shadow:0 2px 4px rgba(0,0,0,.3);line-height:1">'+c.parada+'</div>',
+          iconSize:[28,28], iconAnchor:[14,14], popupAnchor:[0,-14]
         });
         var marker=L.marker([c.lat,c.lng],{icon:icon}).addTo(mapaLeaflet);
         marker.bindPopup(
@@ -576,6 +576,7 @@ function abrirMapa(idx){
           +'<b>Parada '+c.parada+'</b><br>'
           +'CEP: '+c.cep+'<br>'
           +c.bairro+(c.cidade?'<br>'+c.cidade:'')
+          +(c.total>1?'<br><b>'+c.total+' pacotes</b>':'')
           +'</div>'
         );
         bounds.push([c.lat,c.lng]);
@@ -583,7 +584,6 @@ function abrirMapa(idx){
 
       if(bounds.length){
         mapaLeaflet.fitBounds(bounds,{padding:[30,30]});
-        // Força resize depois do fitBounds
         setTimeout(function(){ if(mapaLeaflet) mapaLeaflet.invalidateSize(); },200);
       }
 

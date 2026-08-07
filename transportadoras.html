@@ -543,24 +543,12 @@ function abrirMapa(idx){
 }
 
 function geocodificarLote(ceps, idx, resultados, callback){
-  if(idx>=ceps.length){ callback(resultados); return; }
-  var item=ceps[idx];
-  var url='https://nominatim.openstreetmap.org/search?postalcode='+item.cep+'&country=Brazil&format=json&limit=1';
-  fetch(url,{headers:{'Accept-Language':'pt-BR'}})
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      if(data&&data.length){
-        resultados.push({cep:item.cep,parada:item.parada,bairro:item.bairro,cidade:item.cidade,lat:parseFloat(data[0].lat),lng:parseFloat(data[0].lon)});
-      } else {
-        resultados.push({cep:item.cep,parada:item.parada,bairro:item.bairro,cidade:item.cidade,lat:null,lng:null});
-      }
-      // Delay de 300ms para respeitar rate limit do Nominatim
-      setTimeout(function(){ geocodificarLote(ceps,idx+1,resultados,callback); },300);
-    })
-    .catch(function(){
-      resultados.push({cep:item.cep,parada:item.parada,bairro:item.bairro,cidade:item.cidade,lat:null,lng:null});
-      setTimeout(function(){ geocodificarLote(ceps,idx+1,resultados,callback); },300);
-    });
+  // Agora usa Apps Script como proxy
+  api({action:'geocodificarCeps', ceps:ceps}).then(function(res){
+    callback(res.data||[]);
+  }).catch(function(){
+    callback([]);
+  });
 }
 
 function salvarEscala(){

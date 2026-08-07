@@ -2,9 +2,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
- <link rel="icon" type="image/png" href="https://cdn.iconscout.com/icon/free/png-256/free-mercado-livre-icon-svg-download-png-14549372.png">
+<link rel="icon" type="image/png" href="https://i.ibb.co/wZFtfWJc/mercado-envios-logo-4.png">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Escala — Painel Last Mile</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:12px}
@@ -21,6 +22,7 @@
   .b-csv{background:#065f46;color:#fff}
   .b-lote{background:#1d4ed8;color:#fff}
   .b-detail{background:#7c3aed;color:#fff;padding:3px 7px;font-size:10px}
+  .b-map{background:#0369a1;color:#fff;padding:3px 7px;font-size:10px}
   .b-del{background:#dc2626;color:#fff;padding:3px 7px;font-size:10px}
   .b-cancel{background:#6b7280;color:#fff}
   #filtros-panel{display:none;background:#fff;padding:12px 14px;border-bottom:1px solid #dde;flex-wrap:wrap;gap:8px;align-items:flex-end}
@@ -38,8 +40,8 @@
   .stat-v{font-size:1.2rem;font-weight:700;color:#333}
   .stat-l{font-size:10px;color:#64748b;margin-top:1px}
   .stat-divider{width:1px;background:#e2e8f0;align-self:stretch;margin:0 4px}
-  #tabela-wrap{overflow-x:auto;padding:10px 14px 60px}
-  table{width:100%;border-collapse:collapse;background:#fff;min-width:1200px;border-radius:8px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08)}
+  #tabela-wrap{overflow-x:auto;padding:10px 14px 60px;-webkit-overflow-scrolling:touch}
+  table{width:max-content;min-width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08)}
   thead th{background:#333;color:#FFE600;padding:8px 7px;text-align:left;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;user-select:none}
   thead th:hover{background:#111}
   tbody tr:nth-child(even){background:#f8f9fb}
@@ -60,6 +62,7 @@
   .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:center;justify-content:center;padding:16px}
   .modal-bg.on{display:flex}
   .modal{background:#fff;border-radius:12px;padding:22px;max-width:960px;width:100%;max-height:85vh;display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+  .modal-mapa{max-width:900px;width:100%;max-height:85vh;display:flex;flex-direction:column}
   .modal h3{font-size:14px;color:#333;font-weight:700}
   .modal-scroll{overflow-y:auto;flex:1}
   .modal-footer{display:flex;justify-content:flex-end;gap:8px}
@@ -70,10 +73,15 @@
   .modal label{font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:3px}
   .modal input{width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:13px;margin-bottom:10px}
   .modal input:focus{outline:none;border-color:#FFE600}
+  .mapa-wrap{flex:1;min-height:420px;position:relative;margin-top:8px;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0}
+  #mapa-leaflet-escala{position:absolute;inset:0;width:100%;height:100%}
+  .mapa-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .mapa-stat{background:#f8f9fb;border:1px solid #e2e8f0;border-radius:6px;padding:4px 10px;font-size:10px;color:#555}
+  .mapa-stat b{color:#333}
+  .mapa-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f8fafc;font-size:12px;color:#64748b;border-radius:8px;z-index:10;text-align:center;padding:20px}
 </style>
 </head>
-
-  <body>
+<body>
 <div id="loading"><div class="spin"></div></div>
 <div id="toasts"></div>
 
@@ -145,6 +153,7 @@
   </table>
 </div>
 
+<!-- Modal Detalhe -->
 <div class="modal-bg" id="m-detalhe" onclick="fecharFora(event,'m-detalhe')">
   <div class="modal">
     <h3 id="m-detalhe-titulo">📦 Detalhe da Rota</h3>
@@ -164,6 +173,22 @@
   </div>
 </div>
 
+<!-- Modal Mapa -->
+<div class="modal-bg" id="m-mapa" onclick="fecharFora(event,'m-mapa')">
+  <div class="modal modal-mapa">
+    <h3 id="m-mapa-titulo">🗺️ Mapa da Rota</h3>
+    <div class="mapa-stats" id="m-mapa-stats"></div>
+    <div class="mapa-wrap">
+      <div id="mapa-loading-escala" class="mapa-loading">⏳ Carregando paradas...</div>
+      <div id="mapa-leaflet-escala"></div>
+    </div>
+    <div class="modal-footer" style="margin-top:10px">
+      <button class="btn b-cancel" onclick="fecharMapa()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal MLP -->
 <div class="modal-bg" id="m-mlp" onclick="fecharFora(event,'m-mlp')">
   <div class="modal" style="max-width:380px">
     <h3>➕ Cadastrar MLP</h3>
@@ -176,13 +201,16 @@
   </div>
 </div>
 
-<script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+ <script>
 var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
 var usuario = null;
 try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
 if (!usuario || !usuario.email) { window.location.href='index.html'; }
 
 var brutos=[], filtrados=[], transps=[], sCampo='', sAsc=true, cicloAtual='';
+var mapaLeafletEscala=null, mapaReqAtiva=false;
 
 function api(params){ return fetch(API,{method:'POST',body:JSON.stringify(params)}).then(function(r){return r.json();}); }
 function voltar(){ window.location.href='home.html'; }
@@ -193,6 +221,18 @@ function fechar(id){ document.getElementById(id).classList.remove('on'); }
 function fecharFora(ev,id){ if(ev.target.id===id) fechar(id); }
 function truncar(str,max){ return str.length>max?str.substring(0,max)+'...':str; }
 
+function fecharMapa(){
+  mapaReqAtiva=false;
+  if(mapaLeafletEscala){ mapaLeafletEscala.remove(); mapaLeafletEscala=null; }
+  var velho=document.getElementById('mapa-leaflet-escala');
+  var novo=document.createElement('div'); novo.id='mapa-leaflet-escala';
+  velho.parentNode.replaceChild(novo,velho);
+  document.getElementById('mapa-loading-escala').style.display='flex';
+  document.getElementById('mapa-loading-escala').textContent='⏳ Carregando paradas...';
+  document.getElementById('m-mapa-stats').innerHTML='';
+  fechar('m-mapa');
+}
+
 function iniciar(){
   loading(true);
   api({action:'getCiclos'}).then(function(res){
@@ -202,7 +242,7 @@ function iniciar(){
     ciclos.forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
     if(ciclos.length){ sel.value=ciclos[0]; cicloAtual=ciclos[0]; carregarEscala(ciclos[0]); }
     else { loading(false); }
-  }).catch(function(e){ loading(false); toast('Erro ciclos: '+e.message,'err'); });
+  }).catch(function(er){ loading(false); toast('Erro ciclos: '+er.message,'err'); });
 }
 
 function trocarCiclo(){
@@ -216,8 +256,8 @@ function carregarEscala(ciclo){
     api({action:'getEscala', ciclo:ciclo}),
     api({action:'listarTransportadoras'})
   ]).then(function(res){
-    brutos = res[0].data||[];
-    transps = res[1].data||[];
+    brutos=res[0].data||[];
+    transps=res[1].data||[];
     popularTransps();
     popularFiltrosDinamicos();
     aplicarFiltros();
@@ -337,8 +377,9 @@ function renderTabela(){
       +'<td>'+e(d.doca)+'</td>'
       +'<td>'+e(d.roteiro)+'</td>'
       +'<td style="display:flex;gap:4px">'
-        +'<button class="btn b-detail" onclick="abrirDetalhe('+i+')">📦 Detalhe</button>'
-        +'<button class="btn b-del" onclick="limparLinha('+i+')">✕</button>'
+        +'<button class="btn b-detail" onclick="abrirDetalhe('+i+')">📦</button>'
+        +'<button class="btn b-map"    onclick="abrirMapaEscala('+i+')">🗺️</button>'
+        +'<button class="btn b-del"    onclick="limparLinha('+i+')">✕</button>'
       +'</td>'
     +'</tr>';
   });
@@ -408,13 +449,130 @@ function abrirDetalhe(idx){
     if(!pacs.length){ tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:16px;color:#aaa">Sem pacotes.</td></tr>'; }
     else{
       var h='';
-      pacs.forEach(function(p){
-        h+='<tr><td>'+e(p.rota)+'</td><td>'+e(p.parada)+'</td><td>'+e(p.shipment_id)+'</td><td>'+e(p.cidade)+'</td><td>'+e(p.bairro)+'</td><td>'+e(p.cep)+'</td><td>'+e(p.merchant_type)+'</td><td>'+e(p.promessa_inicio)+'</td><td>'+e(p.promessa_fim)+'</td></tr>';
-      });
+      pacs.forEach(function(p){ h+='<tr><td>'+e(p.rota)+'</td><td>'+e(p.parada)+'</td><td>'+e(p.shipment_id)+'</td><td>'+e(p.cidade)+'</td><td>'+e(p.bairro)+'</td><td>'+e(p.cep)+'</td><td>'+e(p.merchant_type)+'</td><td>'+e(p.promessa_inicio)+'</td><td>'+e(p.promessa_fim)+'</td></tr>'; });
       tbody.innerHTML=h;
     }
     document.getElementById('m-detalhe').classList.add('on');
   }).catch(function(er){ loading(false); toast('Erro detalhe: '+er.message,'err'); });
+}
+
+// ── MAPA ──
+function abrirMapaEscala(idx){
+  var d=filtrados[idx]; if(!d) return;
+
+  mapaReqAtiva=false;
+  if(mapaLeafletEscala){ mapaLeafletEscala.remove(); mapaLeafletEscala=null; }
+  var velho=document.getElementById('mapa-leaflet-escala');
+  var novo=document.createElement('div'); novo.id='mapa-leaflet-escala';
+  velho.parentNode.replaceChild(novo,velho);
+
+  document.getElementById('m-mapa-titulo').textContent='🗺️ Mapa — '+(d.otimizada||d.rota);
+  document.getElementById('m-mapa-stats').innerHTML='';
+  var loadEl=document.getElementById('mapa-loading-escala');
+  loadEl.style.display='flex';
+  loadEl.textContent='⏳ Buscando pacotes da rota...';
+  document.getElementById('m-mapa').classList.add('on');
+
+  var reqId=Date.now();
+  mapaReqAtiva=reqId;
+
+  api({action:'getDetalheRota', ciclo:cicloAtual, rota:d.rota}).then(function(res){
+    if(mapaReqAtiva!==reqId) return;
+    var pacs=res.data||[];
+    if(!pacs.length){ loadEl.textContent='Sem pacotes para exibir no mapa.'; return; }
+
+    // Agrupa por CEP — 1 pin por CEP
+    var cepMap={};
+    pacs.forEach(function(p){
+      var cep=String(p.cep||'').replace(/\D/g,'');
+      if(!cep) return;
+      if(!cepMap[cep]){
+        cepMap[cep]={ cep:cep, rua:p.rua||'', numero:p.numero_casa||'', bairro:p.bairro||'', cidade:p.cidade||'', paradas:[], totalPacotes:0 };
+      }
+      var parada=parseInt(p.parada||999,10);
+      if(cepMap[cep].paradas.indexOf(parada)===-1) cepMap[cep].paradas.push(parada);
+      cepMap[cep].totalPacotes++;
+    });
+
+    var cepsUnicos=Object.values(cepMap).sort(function(a,b){
+      return Math.min.apply(null,a.paradas)-Math.min.apply(null,b.paradas);
+    });
+
+    if(!cepsUnicos.length){ loadEl.textContent='Sem CEPs válidos para geocodificar.'; return; }
+
+    loadEl.textContent='⏳ Geocodificando '+cepsUnicos.length+' CEPs únicos...';
+
+    var payload=cepsUnicos.map(function(c){
+      return { cep:c.cep, rua:c.rua, numero:c.numero, bairro:c.bairro, cidade:c.cidade, parada:c.paradas.length?Math.min.apply(null,c.paradas):999, total:c.totalPacotes };
+    });
+
+    api({action:'geocodificarCeps', ceps:payload}).then(function(geoRes){
+      if(mapaReqAtiva!==reqId) return;
+
+      var coords=geoRes.data||[];
+      var validos=[];
+      coords.forEach(function(c){
+        if(!c.lat||!c.lng) return;
+        var info=cepMap[c.cep]||{};
+        validos.push({ cep:c.cep, lat:c.lat, lng:c.lng, rua:c.rua||info.rua||'', bairro:c.bairro||info.bairro||'', cidade:c.cidade||info.cidade||'', paradas:info.paradas||[], totalPacotes:info.totalPacotes||1 });
+      });
+
+      loadEl.style.display='none';
+
+      if(!validos.length){
+        loadEl.style.display='flex';
+        loadEl.textContent='❌ Não foi possível geocodificar os CEPs.';
+        return;
+      }
+
+      document.getElementById('m-mapa-stats').innerHTML=
+        '<span class="mapa-stat"><b>'+pacs.length+'</b> pacotes</span>'+
+        '<span class="mapa-stat"><b>'+cepsUnicos.length+'</b> CEPs únicos</span>'+
+        '<span class="mapa-stat"><b>'+validos.length+'</b> localizados</span>'+
+        '<span class="mapa-stat">📦 '+e(d.otimizada||d.rota)+'</span>';
+
+      var mapaEl=document.getElementById('mapa-leaflet-escala');
+      mapaLeafletEscala=L.map(mapaEl,{zoomControl:true});
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(mapaLeafletEscala);
+
+      var bounds=[];
+      validos.forEach(function(c){
+        var nParadas=c.paradas.length;
+        var paradasOrdenadas=c.paradas.slice().sort(function(a,b){return a-b;});
+        var icon=L.divIcon({
+          className:'',
+          html:'<div style="background:#FFE600;color:#333;border:2px solid #333;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;box-shadow:0 2px 4px rgba(0,0,0,.3);line-height:1">'+nParadas+'</div>',
+          iconSize:[28,28],iconAnchor:[14,14],popupAnchor:[0,-14]
+        });
+        var marker=L.marker([c.lat,c.lng],{icon:icon}).addTo(mapaLeafletEscala);
+        marker.bindPopup(
+          '<div style="font-size:12px;line-height:1.7;min-width:160px">'
+          +'<b>CEP '+c.cep+'</b><br>'
+          +(c.rua?'<span style="color:#555">'+e(c.rua)+'</span><br>':'')
+          +e(c.bairro)+(c.cidade?'<br>'+e(c.cidade):'')+'<br>'
+          +'<b style="color:#0369a1">'+nParadas+' parada'+(nParadas>1?'s':'')+': '+paradasOrdenadas.join(', ')+'</b><br>'
+          +'<b>'+c.totalPacotes+' pacote'+(c.totalPacotes>1?'s':'')+'</b>'
+          +'</div>'
+        );
+        bounds.push([c.lat,c.lng]);
+      });
+
+      if(bounds.length){
+        mapaLeafletEscala.fitBounds(bounds,{padding:[30,30]});
+        setTimeout(function(){ if(mapaLeafletEscala) mapaLeafletEscala.invalidateSize(); },200);
+      }
+
+    }).catch(function(er){
+      if(mapaReqAtiva!==reqId) return;
+      loadEl.style.display='flex';
+      loadEl.textContent='❌ Erro no geocoding: '+er.message;
+    });
+
+  }).catch(function(er){
+    if(mapaReqAtiva!==reqId) return;
+    loadEl.style.display='flex';
+    loadEl.textContent='❌ Erro ao buscar pacotes: '+er.message;
+  });
 }
 
 function abrirMLP(){ document.getElementById('mlp-nome').value=''; document.getElementById('m-mlp').classList.add('on'); }
@@ -433,9 +591,7 @@ function salvarMLP(){
 function baixarXlsx(){
   if(!filtrados.length){ toast('Sem rotas filtradas.','inf'); return; }
   var rows=[['Otimizada','Rota','Paradas','Pacotes','Cidade','Bairro','Tipo Veículo','Ocup/Vol','Projeto','Transportadora','Giro','Área','Doca','Roteiro']];
-  filtrados.forEach(function(d){
-    rows.push([d.otimizada||'',d.rota||'',d.parada||'',d.pacotes||'',d.cidade||'',d.bairro||'',d.tipo_veiculo||'',d.ocup_volumosos||'',d.projeto||'',d.transportadora||'',d.giro||'',d.area||'',d.doca||'',d.roteiro||'']);
-  });
+  filtrados.forEach(function(d){ rows.push([d.otimizada||'',d.rota||'',d.parada||'',d.pacotes||'',d.cidade||'',d.bairro||'',d.tipo_veiculo||'',d.ocup_volumosos||'',d.projeto||'',d.transportadora||'',d.giro||'',d.area||'',d.doca||'',d.roteiro||'']); });
   var csv=rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
   var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='escala_'+cicloAtual+'.csv'; a.click();
@@ -445,9 +601,7 @@ function baixarXlsx(){
 function baixarCSV(){
   if(!filtrados.length){ toast('Sem rotas filtradas.','inf'); return; }
   var rows=[['Rota otimizada','Rota original','Cluster','Tipo de veículo','SPR','Transportadora']];
-  filtrados.forEach(function(d){
-    rows.push([d.otimizada||'',d.rota||'',d.area||'',d.tipo_veiculo||'',d.doca||'',d.transportadora||'']);
-  });
+  filtrados.forEach(function(d){ rows.push([d.otimizada||'',d.rota||'',d.area||'',d.tipo_veiculo||'',d.doca||'',d.transportadora||'']); });
   var csv=rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
   var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='transportadoras_'+cicloAtual+'.csv'; a.click();

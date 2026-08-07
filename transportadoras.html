@@ -8,15 +8,15 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
-    header { background: #FFE600; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
-    header h1 { font-size: 1rem; font-weight: 700; color: #333; }
-    .btn-back   { background: #333; color: #FFE600; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 700; }
-    .btn-reload { background: #0f766e; color: #fff; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
-    .toolbar { padding: 10px 16px; background: #fff; border-bottom: 1px solid #e0e0e0; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .toolbar select, .toolbar input { padding: 7px 10px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 0.82rem; min-width: 150px; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; font-size: 12px; }
+    header { background: #FFE600; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+    header h1 { font-size: 0.9rem; font-weight: 700; color: #333; }
+    .btn-back   { background: #333; color: #FFE600; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 700; }
+    .btn-reload { background: #0f766e; color: #fff; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; }
+    .toolbar { padding: 6px 12px; background: #fff; border-bottom: 1px solid #e0e0e0; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .toolbar select, .toolbar input { padding: 5px 8px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 0.75rem; min-width: 120px; }
     .toolbar select:focus, .toolbar input:focus { outline: none; border-color: #FFE600; }
-    .btn { padding: 7px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: filter .15s; }
+    .btn { padding: 5px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: 600; transition: filter .15s; white-space: nowrap; }
     .btn:hover { filter: brightness(.9); }
     .btn-green   { background: #15803d; color: #fff; }
     .btn-orange  { background: #ea580c; color: #fff; }
@@ -25,76 +25,75 @@
     .btn-teal    { background: #0f766e; color: #fff; }
     .btn-yellow  { background: #FFE600; color: #333; }
     .btn-map     { background: #0369a1; color: #fff; }
-    .btn-status-pend { background: #fef9c3; color: #854d0e; border: 1.5px solid #fbbf24; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
-    .btn-status-ok   { background: #dcfce7; color: #166534; border: 1.5px solid #4ade80; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+    .btn-status-pend { background: #fef9c3; color: #854d0e; border: 1.5px solid #fbbf24; padding: 3px 8px; border-radius: 20px; cursor: pointer; font-size: 0.68rem; font-weight: 700; white-space: nowrap; }
+    .btn-status-ok   { background: #dcfce7; color: #166534; border: 1.5px solid #4ade80; padding: 3px 8px; border-radius: 20px; cursor: pointer; font-size: 0.68rem; font-weight: 700; white-space: nowrap; }
     .btn-status-pend:hover { background: #fbbf24; color: #fff; }
     .btn-status-ok:hover   { background: #16a34a; color: #fff; }
-    #cards-modal { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 16px; background: #fff; border-bottom: 1px solid #e0e0e0; align-items: center; }
-    .card-modal { background: #f8f9fb; border: 1px solid #e2e8f0; border-radius: 7px; padding: 6px 14px; text-align: center; min-width: 90px; cursor: pointer; transition: all .15s; }
+    #cards-modal { display: flex; gap: 6px; flex-wrap: wrap; padding: 6px 12px; background: #fff; border-bottom: 1px solid #e0e0e0; align-items: center; }
+    .card-modal { background: #f8f9fb; border: 1px solid #e2e8f0; border-radius: 7px; padding: 4px 10px; text-align: center; min-width: 80px; cursor: pointer; transition: all .15s; }
     .card-modal:hover { border-color: #FFE600; background: #fffbeb; }
     .card-modal.ativo { border-color: #FFE600; background: #fffbeb; }
     .card-modal.total { border-color: #333; }
-    .card-modal.total .card-modal-v { color: #333; }
-    .card-modal-v { font-size: 1.15rem; font-weight: 700; color: #333; }
-    .card-modal-l { font-size: 10px; color: #64748b; margin-top: 1px; white-space: nowrap; }
-    .card-divider { width: 1px; background: #e2e8f0; align-self: stretch; margin: 0 4px; }
-    .wrapper { padding: 14px 16px 60px; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.07); min-width: 1500px; }
+    .card-modal-v { font-size: 1rem; font-weight: 700; color: #333; }
+    .card-modal-l { font-size: 9px; color: #64748b; margin-top: 1px; white-space: nowrap; }
+    .card-divider { width: 1px; background: #e2e8f0; align-self: stretch; margin: 0 2px; }
+    .wrapper { padding: 10px 12px 60px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 0.72rem; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
     thead { background: #333; color: #FFE600; }
-    thead th { padding: 9px 8px; text-align: left; font-weight: 600; white-space: nowrap; cursor: pointer; user-select: none; transition: background .15s; }
+    thead th { padding: 7px 6px; text-align: left; font-weight: 600; white-space: nowrap; cursor: pointer; user-select: none; }
     thead th:hover { background: #111; }
     thead th.no-sort { cursor: default; }
     thead th.no-sort:hover { background: #333; }
     tbody tr:nth-child(even) { background: #f9f9f9; }
     tbody tr:hover { background: #fffbeb; }
-    tbody td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
-    input.edit { border: 1.5px solid #ddd; border-radius: 5px; padding: 4px 7px; font-size: 0.8rem; width: 140px; }
+    tbody td { padding: 5px 6px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+    input.edit { border: 1.5px solid #ddd; border-radius: 5px; padding: 3px 5px; font-size: 0.72rem; width: 110px; }
     input.edit:focus { outline: none; border-color: #FFE600; }
     .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: center; justify-content: center; padding: 16px; }
     .modal-bg.show { display: flex; }
-    .modal { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 480px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+    .modal { background: #fff; border-radius: 12px; padding: 20px; width: 100%; max-width: 480px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
     .modal-wide { max-width: 1100px; max-height: 85vh; display: flex; flex-direction: column; }
     .modal-mapa { max-width: 900px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; }
     .modal-drivers { max-width: 98vw; width: 98vw; max-height: 90vh; display: flex; flex-direction: column; }
     .modal-drivers .modal-scroll { overflow-x: hidden; overflow-y: auto; flex: 1; }
     .modal-colunas { max-width: 420px; max-height: 80vh; display: flex; flex-direction: column; }
     .modal-colunas .modal-scroll-colunas { overflow-y: auto; flex: 1; margin-top: 10px; }
-    .modal h3 { margin-bottom: 16px; color: #333; font-size: 1rem; }
-    .modal label { font-size: 0.82rem; font-weight: 600; color: #555; display: block; margin-bottom: 3px; }
-    .modal input, .modal select { width: 100%; padding: 9px 10px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 0.88rem; margin-bottom: 12px; }
+    .modal h3 { margin-bottom: 14px; color: #333; font-size: 0.95rem; }
+    .modal label { font-size: 0.78rem; font-weight: 600; color: #555; display: block; margin-bottom: 3px; }
+    .modal input, .modal select { width: 100%; padding: 8px 10px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 0.82rem; margin-bottom: 10px; }
     .modal input:focus, .modal select:focus { outline: none; border-color: #FFE600; }
     .modal-btns { display: flex; gap: 8px; margin-top: 4px; }
-    .modal-btns button { flex: 1; padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 0.88rem; }
+    .modal-btns button { flex: 1; padding: 9px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 0.82rem; }
     .btn-confirm { background: #FFE600; color: #333; }
     .btn-cancel  { background: #eee; color: #555; }
     .modal-scroll { overflow-y: auto; flex: 1; margin-top: 10px; }
     .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 10px; border-top: 1px solid #f0f0f0; margin-top: 4px; }
-    .modal-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
-    .modal-table th { background: #333; color: #FFE600; padding: 7px 8px; text-align: left; white-space: nowrap; }
-    .modal-table td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; vertical-align: middle; }
+    .modal-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; }
+    .modal-table th { background: #333; color: #FFE600; padding: 6px 8px; text-align: left; white-space: nowrap; }
+    .modal-table td { padding: 5px 8px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; vertical-align: middle; }
     .modal-table tr:hover td { background: #fffbeb; }
-    .pill { display: inline-block; padding: 2px 8px; background: #e2e8f0; border-radius: 20px; font-size: 0.75rem; margin-right: 4px; margin-bottom: 4px; }
-    .msg { padding: 9px 14px; border-radius: 6px; margin: 8px 16px 0; font-size: 0.85rem; display: none; }
+    .pill { display: inline-block; padding: 2px 7px; background: #e2e8f0; border-radius: 20px; font-size: 0.7rem; margin-right: 3px; margin-bottom: 3px; }
+    .msg { padding: 8px 12px; border-radius: 6px; margin: 6px 12px 0; font-size: 0.8rem; display: none; }
     .msg.ok  { background: #dcfce7; color: #166534; display: block; }
     .msg.err { background: #fee2e2; color: #991b1b; display: block; }
     #loading { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 500; align-items: center; justify-content: center; flex-direction: column; gap: 12px; color: #fff; font-size: 0.9rem; font-weight: 600; }
     #loading.on { display: flex; }
-    .spinner { width: 38px; height: 38px; border: 4px solid rgba(255,255,255,0.3); border-top-color: #FFE600; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    .spinner { width: 36px; height: 36px; border: 4px solid rgba(255,255,255,0.3); border-top-color: #FFE600; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .btn-edit-sm { background: #fffbeb; color: #333; border: 1px solid #FFE600; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 4px; }
-    .btn-del-sm  { background: #fee2e2; color: #991b1b; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .btn-edit-sm { background: #fffbeb; color: #333; border: 1px solid #FFE600; padding: 4px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: 600; margin-right: 3px; }
+    .btn-del-sm  { background: #fee2e2; color: #991b1b; border: none; padding: 4px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: 600; }
     .btn-edit-sm:hover { background: #FFE600; }
     .btn-del-sm:hover  { background: #991b1b; color: #fff; }
-    .col-toggle-item { display: flex; align-items: center; gap: 10px; padding: 7px 4px; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
+    .col-toggle-item { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-bottom: 1px solid #f0f0f0; font-size: 0.82rem; }
     .col-toggle-item:last-child { border-bottom: none; }
-    .col-toggle-item input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: #333; }
+    .col-toggle-item input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; accent-color: #333; }
     .col-toggle-item label { cursor: pointer; flex: 1; color: #374151; font-weight: 500; }
     .mapa-wrap { flex: 1; min-height: 420px; position: relative; margin-top: 8px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
     #mapa-leaflet { position: absolute; inset: 0; width: 100%; height: 100%; }
     .mapa-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
-    .mapa-stat { background: #f8f9fb; border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px 12px; font-size: 11px; color: #555; }
+    .mapa-stat { background: #f8f9fb; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 10px; font-size: 10px; color: #555; }
     .mapa-stat b { color: #333; }
-    .mapa-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #f8fafc; font-size: 13px; color: #64748b; border-radius: 8px; z-index: 10; text-align: center; padding: 20px; }
+    .mapa-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #f8fafc; font-size: 12px; color: #64748b; border-radius: 8px; z-index: 10; text-align: center; padding: 20px; }
   </style>
 </head>
 <body>
@@ -105,15 +104,15 @@
   <h1>🚛 Transportadoras</h1>
   <div style="display:flex;gap:8px;align-items:center">
     <button class="btn-reload" onclick="recarregar()">🔄 Atualizar</button>
-    <button class="btn-back" onclick="voltar()">🏠 Home</button>
+    <button class="btn-back"   onclick="voltar()">🏠 Home</button>
   </div>
 </header>
 
 <div class="toolbar">
   <select id="selCiclo" onchange="trocarCiclo()"><option value="">Carregando...</option></select>
   <select id="filtroTransp" onchange="onFiltroTranspChange()"><option value="">Todas as transportadoras</option></select>
-  <input type="text" id="filtroModal" placeholder="🔍 Buscar modal..." oninput="filtrar()" />
-  <input type="text" id="filtroTexto" placeholder="🔍 Buscar rota, cidade..." oninput="filtrar()" />
+  <input type="text" id="filtroModal"  placeholder="🔍 Modal..."    oninput="filtrar()" />
+  <input type="text" id="filtroTexto" placeholder="🔍 Rota, cidade..." oninput="filtrar()" />
   <button class="btn btn-green"   onclick="abrirModalDriver(false)">➕ Driver</button>
   <button class="btn btn-orange"  onclick="abrirListaDrivers()">👥 Drivers</button>
   <button class="btn btn-outline" onclick="abrirModalColunas()">👁️ Colunas</button>
@@ -127,24 +126,24 @@
   <table id="tabelaPrincipal">
     <thead>
       <tr id="thead-row">
-        <th data-col="0"  onclick="sortBy('rota')">Planejada ↕</th>
-        <th data-col="1"  onclick="sortBy('otimizada')">Otimizada ↕</th>
-        <th data-col="2"  onclick="sortBy('pacotes')">Pacotes ↕</th>
-        <th data-col="3"  onclick="sortBy('parada')">Paradas ↕</th>
-        <th data-col="4"  onclick="sortBy('tipo_veiculo')">Tipo Veículo ↕</th>
-        <th data-col="5"  onclick="sortBy('ocup_volumosos')">% Ocup ↕</th>
-        <th data-col="6"  onclick="sortBy('bairro')">Bairro ↕</th>
-        <th data-col="7"  onclick="sortBy('cidade')">Cidade ↕</th>
-        <th data-col="8"  onclick="sortBy('projeto')">Projeto ↕</th>
-        <th data-col="9"  onclick="sortBy('giro')">Giro ↕</th>
-        <th data-col="10" onclick="sortBy('area')">Área ↕</th>
-        <th data-col="11" onclick="sortBy('doca')">Doca ↕</th>
-        <th data-col="12" onclick="sortBy('roteiro')">Roteiro ↕</th>
-        <th data-col="13" onclick="sortBy('placa')">Placa ↕</th>
-        <th data-col="14" onclick="sortBy('driver')">Driver ↕</th>
-        <th data-col="15" onclick="sortBy('transportadora')">Transportadora ↕</th>
-        <th data-col="16" class="no-sort">Carregado</th>
-        <th data-col="17" class="no-sort">Ações</th>
+        <th onclick="sortBy('rota')">Planejada ↕</th>
+        <th onclick="sortBy('otimizada')">Otimizada ↕</th>
+        <th onclick="sortBy('pacotes')">Pkgs ↕</th>
+        <th onclick="sortBy('parada')">Paradas ↕</th>
+        <th onclick="sortBy('tipo_veiculo')">Modal ↕</th>
+        <th onclick="sortBy('ocup_volumosos')">%Ocup ↕</th>
+        <th onclick="sortBy('bairro')">Bairro ↕</th>
+        <th onclick="sortBy('cidade')">Cidade ↕</th>
+        <th onclick="sortBy('projeto')">Projeto ↕</th>
+        <th onclick="sortBy('giro')">Giro ↕</th>
+        <th onclick="sortBy('area')">Área ↕</th>
+        <th onclick="sortBy('doca')">Doca ↕</th>
+        <th onclick="sortBy('roteiro')">Roteiro ↕</th>
+        <th onclick="sortBy('placa')">Placa ↕</th>
+        <th onclick="sortBy('driver')">Driver ↕</th>
+        <th onclick="sortBy('transportadora')">Transportadora ↕</th>
+        <th class="no-sort">Carregado</th>
+        <th class="no-sort">Ações</th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
@@ -208,7 +207,7 @@
     <h3>👥 Drivers Cadastrados</h3>
     <input id="busca-driver" type="text" placeholder="🔍 Buscar nome, placa, modal..."
       oninput="filtrarListaDrivers()"
-      style="margin-bottom:10px;width:100%;padding:7px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:0.85rem;" />
+      style="margin-bottom:10px;width:100%;padding:6px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:0.8rem;" />
     <div class="modal-scroll">
       <table class="modal-table">
         <thead><tr><th>Nome</th><th>Placa</th><th>Modal</th><th>Transportadora</th><th>Ações</th></tr></thead>
@@ -248,8 +247,8 @@ var statusMap={},cicloAtual='',filtroModalAtivo='',sCampo='',sAsc=true;
 var mapaLeaflet=null, mapaRequisicaoAtiva=false;
 
 var COLUNAS=[
-  {label:'Planejada',vis:true},{label:'Otimizada',vis:true},{label:'Pacotes',vis:true},
-  {label:'Paradas',vis:true},{label:'Tipo Veículo',vis:true},{label:'% Ocup',vis:true},
+  {label:'Planejada',vis:true},{label:'Otimizada',vis:true},{label:'Pkgs',vis:true},
+  {label:'Paradas',vis:true},{label:'Modal',vis:true},{label:'%Ocup',vis:true},
   {label:'Bairro',vis:true},{label:'Cidade',vis:true},{label:'Projeto',vis:true},
   {label:'Giro',vis:true},{label:'Área',vis:true},{label:'Doca',vis:true},
   {label:'Roteiro',vis:true},{label:'Placa',vis:true},{label:'Driver',vis:true},
@@ -393,11 +392,11 @@ function atualizarCardsModal(){
   dadosFiltrados.forEach(function(d){ var tipo=String(d.tipo_veiculo||'').trim()||'Sem tipo'; if(!contagem[tipo])contagem[tipo]=0; contagem[tipo]++; });
   var html='<div class="card-modal total" onclick="filtrarPorCard(\'\')">'
     +'<div class="card-modal-v">'+dadosFiltrados.length+'</div>'
-    +'<div class="card-modal-l">Total Rotas</div></div>'
+    +'<div class="card-modal-l">Total</div></div>'
     +'<div class="card-divider"></div>';
   Object.keys(contagem).sort(function(a,b){ return contagem[b]-contagem[a]; }).forEach(function(tipo){
     var ativo=filtroModalAtivo===tipo?' ativo':'';
-    var label=tipo.length>18?tipo.substring(0,18)+'...':tipo;
+    var label=tipo.length>16?tipo.substring(0,16)+'...':tipo;
     html+='<div class="card-modal'+ativo+'" title="'+tipo+'" onclick="filtrarPorCard(\''+tipo.replace(/'/g,"\\'")+'\')"><div class="card-modal-v">'+contagem[tipo]+'</div><div class="card-modal-l">'+label+'</div></div>';
   });
   document.getElementById('cards-modal').innerHTML=html;
@@ -435,9 +434,9 @@ function renderTabela(){
       +'<td>'+esc(d.roteiro)+'</td><td>'+placa+'</td><td>'+driver+'</td>'
       +'<td>'+esc(d.transportadora)+'</td>'
       +'<td style="text-align:center">'+btnStatus+'</td>'
-      +'<td style="display:flex;gap:4px;align-items:center">'
-        +'<button class="btn btn-purple" style="padding:4px 8px;font-size:0.72rem" onclick="abrirDetalhe('+i+')">📦 Detalhe</button>'
-        +'<button class="btn btn-map"    style="padding:4px 8px;font-size:0.72rem" onclick="abrirMapa('+i+')">🗺️ Mapa</button>'
+      +'<td style="display:flex;gap:3px;align-items:center">'
+        +'<button class="btn btn-purple" style="padding:3px 7px;font-size:0.68rem" onclick="abrirDetalhe('+i+')">📦</button>'
+        +'<button class="btn btn-map"    style="padding:3px 7px;font-size:0.68rem" onclick="abrirMapa('+i+')">🗺️</button>'
       +'</td>'
     +'</tr>';
   });
@@ -472,7 +471,7 @@ function toggleStatus(rota,novoStatus){
 function abrirDetalhe(idx){
   var d=dadosFiltrados[idx]; if(!d) return; loading(true);
   document.getElementById('detalhe-titulo').textContent='📦 Detalhe — '+(d.otimizada||d.rota);
-  document.getElementById('detalhe-resumo').innerHTML='<span class="pill">Ciclo: '+cicloAtual+'</span><span class="pill">Rota: '+esc(d.rota)+'</span><span class="pill">Pacotes: '+esc(d.pacotes)+'</span><span class="pill">Cidade: '+esc(d.cidade)+'</span><span class="pill">Transp.: '+esc(d.transportadora)+'</span>'+(String(d.projeto||'').toLowerCase().indexOf('hybrid')>-1?'<span class="pill">💰 Híbrida</span>':'');
+  document.getElementById('detalhe-resumo').innerHTML='<span class="pill">Ciclo: '+cicloAtual+'</span><span class="pill">Rota: '+esc(d.rota)+'</span><span class="pill">Pkgs: '+esc(d.pacotes)+'</span><span class="pill">Cidade: '+esc(d.cidade)+'</span><span class="pill">Transp.: '+esc(d.transportadora)+'</span>'+(String(d.projeto||'').toLowerCase().indexOf('hybrid')>-1?'<span class="pill">💰 Híbrida</span>':'');
   api({action:'getDetalheRota', ciclo:cicloAtual, rota:d.rota}).then(function(res){
     loading(false);
     var pacs=res.data||[];
@@ -486,15 +485,11 @@ function abrirDetalhe(idx){
 // ── MAPA ──
 function abrirMapa(idx){
   var d=dadosFiltrados[idx]; if(!d) return;
-
-  // Reset completo
   mapaRequisicaoAtiva=false;
   if(mapaLeaflet){ mapaLeaflet.remove(); mapaLeaflet=null; }
   var velho=document.getElementById('mapa-leaflet');
-  var novo=document.createElement('div');
-  novo.id='mapa-leaflet';
+  var novo=document.createElement('div'); novo.id='mapa-leaflet';
   velho.parentNode.replaceChild(novo,velho);
-
   document.getElementById('mapa-titulo').textContent='🗺️ Mapa — '+(d.otimizada||d.rota);
   document.getElementById('mapa-stats').innerHTML='';
   var loadEl=document.getElementById('mapa-loading');
@@ -510,79 +505,108 @@ function abrirMapa(idx){
     var pacs=res.data||[];
     if(!pacs.length){ loadEl.textContent='Sem pacotes para exibir no mapa.'; return; }
 
-    // Agrupa por PARADA — 1 pin por parada com 1 CEP representativo
-var paradaMap={};
-pacs.forEach(function(p){
-  var cep    = String(p.cep||'').replace(/\D/g,'');
-  var parada = parseInt(p.parada||999,10);
-  if(!paradaMap[parada]){
-    paradaMap[parada]={
-      cep:    cep||'',
-      rua:    p.rua||'',
-      numero: p.numero_casa||'',
-      parada: parada,
-      bairro: p.bairro||'',
-      cidade: p.cidade||'',
-      total:  1
-    };
-  } else {
-    paradaMap[parada].total++;
-    if(!paradaMap[parada].cep && cep) paradaMap[parada].cep=cep;
-    if(!paradaMap[parada].rua && p.rua) paradaMap[parada].rua=p.rua||'';
-    if(!paradaMap[parada].numero && p.numero_casa) paradaMap[parada].numero=p.numero_casa||'';
-  }
-});
+    // Agrupa por CEP — 1 pin por CEP
+    var cepMap={};
+    pacs.forEach(function(p){
+      var cep=String(p.cep||'').replace(/\D/g,'');
+      if(!cep) return;
+      if(!cepMap[cep]){
+        cepMap[cep]={
+          cep:    cep,
+          rua:    p.rua||'',
+          numero: p.numero_casa||'',
+          bairro: p.bairro||'',
+          cidade: p.cidade||'',
+          paradas:[],
+          totalPacotes:0
+        };
+      }
+      var parada=parseInt(p.parada||999,10);
+      if(cepMap[cep].paradas.indexOf(parada)===-1) cepMap[cep].paradas.push(parada);
+      cepMap[cep].totalPacotes++;
+    });
 
-    var paradas=Object.values(paradaMap)
-      .filter(function(p){ return !!p.cep; })
-      .sort(function(a,b){ return a.parada-b.parada; });
+    var cepsUnicos=Object.values(cepMap).sort(function(a,b){
+      return Math.min.apply(null,a.paradas)-Math.min.apply(null,b.paradas);
+    });
 
-    if(!paradas.length){ loadEl.textContent='Sem CEPs válidos para geocodificar.'; return; }
+    if(!cepsUnicos.length){ loadEl.textContent='Sem CEPs válidos para geocodificar.'; return; }
 
-    loadEl.textContent='⏳ Geocodificando '+paradas.length+' paradas... (pode levar alguns segundos)';
+    loadEl.textContent='⏳ Geocodificando '+cepsUnicos.length+' CEPs únicos...';
 
-    api({action:'geocodificarCeps', ceps:paradas}).then(function(geoRes){
+    // Prepara payload para geocoding
+    var payload=cepsUnicos.map(function(c){
+      return {
+        cep:    c.cep,
+        rua:    c.rua,
+        numero: c.numero,
+        bairro: c.bairro,
+        cidade: c.cidade,
+        parada: c.paradas.length ? Math.min.apply(null,c.paradas) : 999,
+        total:  c.totalPacotes
+      };
+    });
+
+    api({action:'geocodificarCeps', ceps:payload}).then(function(geoRes){
       if(mapaRequisicaoAtiva!==reqId) return;
 
       var coords=geoRes.data||[];
-      var validos=coords.filter(function(c){ return c.lat&&c.lng; });
+      // Junta dados do cepMap com coordenadas
+      var validos=[];
+      coords.forEach(function(c){
+        if(!c.lat||!c.lng) return;
+        var info=cepMap[c.cep]||{};
+        validos.push({
+          cep:         c.cep,
+          lat:         c.lat,
+          lng:         c.lng,
+          rua:         c.rua||info.rua||'',
+          bairro:      c.bairro||info.bairro||'',
+          cidade:      c.cidade||info.cidade||'',
+          paradas:     info.paradas||[],
+          totalPacotes:info.totalPacotes||1
+        });
+      });
 
       loadEl.style.display='none';
 
       if(!validos.length){
         loadEl.style.display='flex';
-        loadEl.textContent='❌ Não foi possível geocodificar as paradas.';
+        loadEl.textContent='❌ Não foi possível geocodificar os CEPs.';
         return;
       }
 
       document.getElementById('mapa-stats').innerHTML=
         '<span class="mapa-stat"><b>'+pacs.length+'</b> pacotes</span>'+
-        '<span class="mapa-stat"><b>'+paradas.length+'</b> paradas</span>'+
-        '<span class="mapa-stat"><b>'+validos.length+'</b> localizadas</span>'+
+        '<span class="mapa-stat"><b>'+cepsUnicos.length+'</b> CEPs únicos</span>'+
+        '<span class="mapa-stat"><b>'+validos.length+'</b> localizados</span>'+
         '<span class="mapa-stat">🚛 '+esc(d.transportadora||'Sem transp.')+'</span>';
 
       var mapaEl=document.getElementById('mapa-leaflet');
       mapaLeaflet=L.map(mapaEl,{zoomControl:true});
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-        attribution:'© OpenStreetMap', maxZoom:18
+        attribution:'© OpenStreetMap', maxZoom:19
       }).addTo(mapaLeaflet);
 
       var bounds=[];
       validos.forEach(function(c){
+        var nParadas=c.paradas.length;
+        var paradasOrdenadas=c.paradas.slice().sort(function(a,b){return a-b;});
         var icon=L.divIcon({
           className:'',
-          html:'<div style="background:#FFE600;color:#333;border:2px solid #333;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;box-shadow:0 2px 4px rgba(0,0,0,.3);line-height:1">'+c.parada+'</div>',
+          html:'<div style="background:#FFE600;color:#333;border:2px solid #333;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;box-shadow:0 2px 4px rgba(0,0,0,.3);line-height:1">'+nParadas+'</div>',
           iconSize:[28,28], iconAnchor:[14,14], popupAnchor:[0,-14]
         });
         var marker=L.marker([c.lat,c.lng],{icon:icon}).addTo(mapaLeaflet);
-marker.bindPopup(
-  '<div style="font-size:12px;line-height:1.6">'
-  +'<b>Parada '+c.parada+'</b><br>'
-  +(c.rua?(c.rua+(c.numero?', '+c.numero:'')+'<br>'):'')
-  +c.bairro+(c.cidade?'<br>'+c.cidade:'')
-  +(c.total>1?'<br><b>'+c.total+' pacotes</b>':'')
-  +'</div>'
-);
+        marker.bindPopup(
+          '<div style="font-size:12px;line-height:1.7;min-width:160px">'
+          +'<b>CEP '+c.cep+'</b><br>'
+          +(c.rua?'<span style="color:#555">'+esc(c.rua)+'</span><br>':'')
+          +esc(c.bairro)+(c.cidade?'<br>'+esc(c.cidade):'')+'<br>'
+          +'<b style="color:#0369a1">'+nParadas+' parada'+(nParadas>1?'s':'')+': '+paradasOrdenadas.join(', ')+'</b><br>'
+          +'<b>'+c.totalPacotes+' pacote'+(c.totalPacotes>1?'s':'')+'</b>'
+          +'</div>'
+        );
         bounds.push([c.lat,c.lng]);
       });
 
@@ -699,8 +723,8 @@ function renderListaDrivers(lista){
     var nomeEsc=esc(d.nome).replace(/'/g,"&#39;");
     html+='<tr><td>'+esc(d.nome)+'</td><td>'+esc(d.placa)+'</td><td>'+esc(d.modal)+'</td><td>'+esc(d.transportadora)+'</td>'
       +'<td style="text-align:center;white-space:nowrap">'
-      +'<button class="btn-edit-sm" onclick="editarDriver(\''+nomeEsc+'\')">✏️ Editar</button>'
-      +'<button class="btn-del-sm" onclick="excluirDriver(\''+nomeEsc+'\')">🗑️ Excluir</button>'
+      +'<button class="btn-edit-sm" onclick="editarDriver(\''+nomeEsc+'\')">✏️</button>'
+      +'<button class="btn-del-sm"  onclick="excluirDriver(\''+nomeEsc+'\')">🗑️</button>'
       +'</td></tr>';
   });
   tbody.innerHTML=html;

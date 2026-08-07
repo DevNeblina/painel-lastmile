@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Transportadoras — Painel Last Mile</title>
+  <link rel="icon" type="image/png" href="https://i.ibb.co/wZFtfWJc/mercado-envios-logo-4.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; }
@@ -22,6 +24,7 @@
     .btn-purple  { background: #7c3aed; color: #fff; }
     .btn-teal    { background: #0f766e; color: #fff; }
     .btn-yellow  { background: #FFE600; color: #333; }
+    .btn-map     { background: #0369a1; color: #fff; }
     .btn-status-pend { background: #fef9c3; color: #854d0e; border: 1.5px solid #fbbf24; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
     .btn-status-ok   { background: #dcfce7; color: #166534; border: 1.5px solid #4ade80; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
     .btn-status-pend:hover { background: #fbbf24; color: #fff; }
@@ -51,6 +54,7 @@
     .modal-bg.show { display: flex; }
     .modal { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 480px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
     .modal-wide { max-width: 1100px; max-height: 85vh; display: flex; flex-direction: column; }
+    .modal-mapa { max-width: 900px; max-height: 85vh; display: flex; flex-direction: column; }
     .modal-drivers { max-width: 98vw; width: 98vw; max-height: 90vh; display: flex; flex-direction: column; }
     .modal-drivers .modal-scroll { overflow-x: hidden; overflow-y: auto; flex: 1; }
     .modal-colunas { max-width: 420px; max-height: 80vh; display: flex; flex-direction: column; }
@@ -85,10 +89,15 @@
     .col-toggle-item:last-child { border-bottom: none; }
     .col-toggle-item input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: #333; }
     .col-toggle-item label { cursor: pointer; flex: 1; color: #374151; font-weight: 500; }
+    #mapa-leaflet { height: 500px; width: 100%; border-radius: 8px;  margin-top: 10px; }
+    .mapa-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .mapa-stat { background: #f8f9fb; border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px 12px; font-size: 11px; color: #555; }
+    .mapa-stat b { color: #333; }
+    .mapa-loading { text-align: center; padding: 40px; color: #64748b; font-size: 13px; }
   </style>
 </head>
 
-<body>
+  <body>
 <div id="loading"><div class="spinner"></div><span>Carregando...</span></div>
 <div id="msgGlobal" class="msg"></div>
 
@@ -135,7 +144,7 @@
         <th data-col="14" onclick="sortBy('driver')">Driver ↕</th>
         <th data-col="15" onclick="sortBy('transportadora')">Transportadora ↕</th>
         <th data-col="16" class="no-sort">Carregado</th>
-        <th data-col="17" class="no-sort">Detalhe</th>
+        <th data-col="17" class="no-sort">Ações</th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
@@ -159,6 +168,19 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-cancel" onclick="fecharModal('modalDetalhe')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Mapa -->
+<div class="modal-bg" id="modalMapa">
+  <div class="modal modal-mapa">
+    <h3 id="mapa-titulo">🗺️ Mapa da Rota</h3>
+    <div class="mapa-stats" id="mapa-stats"></div>
+    <div id="mapa-loading" class="mapa-loading">⏳ Carregando paradas e geocodificando CEPs...</div>
+    <div id="mapa-leaflet"></div>
+    <div class="modal-footer" style="margin-top:10px">
+      <button class="btn btn-cancel" onclick="fecharModal('modalMapa')">Fechar</button>
     </div>
   </div>
 </div>
@@ -211,7 +233,9 @@
   </div>
 </div>
 
-  <script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
 var API = 'https://script.google.com/macros/s/AKfycbwDJ3DjUzHAyLxps9gLKW8dLoZdJ-q_sD1A8fj6Vg5TgCwc1bMR9Fso2HLJXuPL6sVC/exec';
 var usuario = null;
 try { usuario = JSON.parse(sessionStorage.getItem('usuario')); } catch(e) {}
@@ -219,6 +243,7 @@ if (!usuario || !usuario.email) { window.location.href='index.html'; }
 
 var dadosBrutos=[],dadosFiltrados=[],transps=[],todosDrivers=[];
 var statusMap={},cicloAtual='',filtroModalAtivo='',sCampo='',sAsc=true;
+var mapaLeaflet=null, mapaAtivo=false;
 
 var COLUNAS=[
   {label:'Planejada',vis:true},{label:'Otimizada',vis:true},{label:'Pacotes',vis:true},
@@ -226,7 +251,7 @@ var COLUNAS=[
   {label:'Bairro',vis:true},{label:'Cidade',vis:true},{label:'Projeto',vis:true},
   {label:'Giro',vis:true},{label:'Área',vis:true},{label:'Doca',vis:true},
   {label:'Roteiro',vis:true},{label:'Placa',vis:true},{label:'Driver',vis:true},
-  {label:'Transportadora',vis:true},{label:'Carregado',vis:true},{label:'Detalhe',vis:true}
+  {label:'Transportadora',vis:true},{label:'Carregado',vis:true},{label:'Ações',vis:true}
 ];
 
 function api(params){ return fetch(API,{method:'POST',body:JSON.stringify(params)}).then(function(r){return r.json();}); }
@@ -235,7 +260,10 @@ function recarregar(){ filtroModalAtivo=''; sCampo=''; carregarEscala(cicloAtual
 function loading(s){ var el=document.getElementById('loading'); s?el.classList.add('on'):el.classList.remove('on'); }
 function mostrarMsg(msg,ok){ var el=document.getElementById('msgGlobal'); el.textContent=msg; el.className='msg '+(ok?'ok':'err'); setTimeout(function(){ el.className='msg'; },4000); }
 function esc(v){ if(v===null||v===undefined)return''; return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function fecharModal(id){ document.getElementById(id).classList.remove('show'); }
+function fecharModal(id){
+  document.getElementById(id).classList.remove('show');
+  if(id==='modalMapa' && mapaLeaflet){ mapaLeaflet.remove(); mapaLeaflet=null; mapaAtivo=false; }
+}
 
 function iniciar(){
   loading(true);
@@ -394,7 +422,10 @@ function renderTabela(){
       +'<td>'+esc(d.roteiro)+'</td><td>'+placa+'</td><td>'+driver+'</td>'
       +'<td>'+esc(d.transportadora)+'</td>'
       +'<td style="text-align:center">'+btnStatus+'</td>'
-      +'<td><button class="btn btn-purple" style="padding:4px 10px;font-size:0.75rem" onclick="abrirDetalhe('+i+')">📦 Detalhe</button></td>'
+      +'<td style="display:flex;gap:4px;align-items:center">'
+        +'<button class="btn btn-purple" style="padding:4px 8px;font-size:0.72rem" onclick="abrirDetalhe('+i+')">📦 Detalhe</button>'
+        +'<button class="btn btn-map"    style="padding:4px 8px;font-size:0.72rem" onclick="abrirMapa('+i+')">🗺️ Mapa</button>'
+      +'</td>'
     +'</tr>';
   });
   tbody.innerHTML=html;
@@ -402,7 +433,7 @@ function renderTabela(){
   aplicarVisibilidadeColunas();
 }
 
-function mudaPlaca(idx,placa){
+      function mudaPlaca(idx,placa){
   if(dadosFiltrados[idx]) dadosFiltrados[idx].placa=placa; sincronizarBrutos(idx);
   var driver=todosDrivers.filter(function(d){ return d.placa===placa; })[0];
   if(driver){ dadosFiltrados[idx].driver=driver.nome; sincronizarBrutos(idx); var inputs=document.querySelectorAll('input.edit[data-field="driver"]'); if(inputs[idx]) inputs[idx].value=driver.nome; }
@@ -439,6 +470,99 @@ function abrirDetalhe(idx){
   }).catch(function(e){ loading(false); mostrarMsg('Erro detalhe: '+e.message,false); });
 }
 
+// ── MAPA ──
+function abrirMapa(idx){
+  var d=dadosFiltrados[idx]; if(!d) return;
+  document.getElementById('mapa-titulo').textContent='🗺️ Mapa — '+(d.otimizada||d.rota);
+  document.getElementById('mapa-stats').innerHTML='';
+  document.getElementById('mapa-loading').style.display='block';
+  document.getElementById('mapa-leaflet').style.display='none';
+  document.getElementById('modalMapa').classList.add('show');
+  if(mapaLeaflet){ mapaLeaflet.remove(); mapaLeaflet=null; }
+
+  api({action:'getDetalheRota', ciclo:cicloAtual, rota:d.rota}).then(function(res){
+    var pacs=res.data||[];
+    if(!pacs.length){
+      document.getElementById('mapa-loading').textContent='Sem pacotes para exibir no mapa.';
+      return;
+    }
+    // Agrupa por CEP único mantendo menor parada
+    var cepMap={};
+    pacs.forEach(function(p){
+      var cep=String(p.cep||'').replace(/\D/g,'');
+      var parada=parseInt(p.parada||999,10);
+      if(!cep) return;
+      if(!cepMap[cep]||parada<cepMap[cep].parada){
+        cepMap[cep]={cep:cep, parada:parada, bairro:p.bairro||'', cidade:p.cidade||''};
+      }
+    });
+    var cepsUnicos=Object.values(cepMap).sort(function(a,b){ return a.parada-b.parada; });
+
+    document.getElementById('mapa-loading').textContent='⏳ Geocodificando '+cepsUnicos.length+' CEPs únicos...';
+
+    // Geocodifica em lotes sequenciais
+    geocodificarLote(cepsUnicos, 0, [], function(coords){
+      document.getElementById('mapa-loading').style.display='none';
+      document.getElementById('mapa-leaflet').style.display='block';
+
+      var validos=coords.filter(function(c){ return c.lat&&c.lng; });
+      if(!validos.length){
+        document.getElementById('mapa-loading').style.display='block';
+        document.getElementById('mapa-loading').textContent='❌ Não foi possível geocodificar os CEPs.';
+        return;
+      }
+
+      document.getElementById('mapa-stats').innerHTML=
+        '<span class="mapa-stat"><b>'+pacs.length+'</b> pacotes</span>'+
+        '<span class="mapa-stat"><b>'+cepsUnicos.length+'</b> CEPs únicos</span>'+
+        '<span class="mapa-stat"><b>'+validos.length+'</b> localizados</span>'+
+        '<span class="mapa-stat">🚛 '+esc(d.transportadora||'Sem transp.')+'</span>';
+
+      mapaLeaflet=L.map('mapa-leaflet');
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        attribution:'© OpenStreetMap',maxZoom:18
+      }).addTo(mapaLeaflet);
+
+      var bounds=[];
+      validos.forEach(function(c){
+        var icon=L.divIcon({
+          className:'',
+          html:'<div style="background:#FFE600;color:#333;border:2px solid #333;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;box-shadow:0 2px 4px rgba(0,0,0,.3)">'+c.parada+'</div>',
+          iconSize:[26,26],iconAnchor:[13,13]
+        });
+        var marker=L.marker([c.lat,c.lng],{icon:icon}).addTo(mapaLeaflet);
+        marker.bindPopup('<div style="font-size:12px;line-height:1.6"><b>Parada '+c.parada+'</b><br>CEP: '+c.cep+'<br>'+c.bairro+(c.cidade?', '+c.cidade:'')+'</div>');
+        bounds.push([c.lat,c.lng]);
+      });
+
+      if(bounds.length) mapaLeaflet.fitBounds(bounds,{padding:[30,30]});
+    });
+  }).catch(function(e){
+    document.getElementById('mapa-loading').textContent='Erro: '+e.message;
+  });
+}
+
+function geocodificarLote(ceps, idx, resultados, callback){
+  if(idx>=ceps.length){ callback(resultados); return; }
+  var item=ceps[idx];
+  var url='https://nominatim.openstreetmap.org/search?postalcode='+item.cep+'&country=Brazil&format=json&limit=1';
+  fetch(url,{headers:{'Accept-Language':'pt-BR'}})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data&&data.length){
+        resultados.push({cep:item.cep,parada:item.parada,bairro:item.bairro,cidade:item.cidade,lat:parseFloat(data[0].lat),lng:parseFloat(data[0].lon)});
+      } else {
+        resultados.push({cep:item.cep,parada:item.parada,bairro:item.bairro,cidade:item.cidade,lat:null,lng:null});
+      }
+      // Delay de 300ms para respeitar rate limit do Nominatim
+      setTimeout(function(){ geocodificarLote(ceps,idx+1,resultados,callback); },300);
+    })
+    .catch(function(){
+      resultados.push({cep:item.cep,parada:item.parada,bairro:item.bairro,cidade:item.cidade,lat:null,lng:null});
+      setTimeout(function(){ geocodificarLote(ceps,idx+1,resultados,callback); },300);
+    });
+}
+
 function salvarEscala(){
   var inputs=document.querySelectorAll('input.edit');
   inputs.forEach(function(inp){ var idx=parseInt(inp.dataset.idx), field=inp.dataset.field; if(dadosFiltrados[idx]){ dadosFiltrados[idx][field]=inp.value; sincronizarBrutos(idx); } });
@@ -468,9 +592,7 @@ function baixarTabela(){
   var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
   var url=URL.createObjectURL(blob);
   var link=document.createElement('a');
-  link.href=url;
-  link.download=((usuario&&usuario.transportadora)?usuario.transportadora:'escala')+'_'+cicloAtual+'.csv';
-  link.click();
+  link.href=url; link.download=((usuario&&usuario.transportadora)?usuario.transportadora:'escala')+'_'+cicloAtual+'.csv'; link.click();
   URL.revokeObjectURL(url);
   mostrarMsg('✅ Arquivo baixado!',true);
 }
@@ -562,5 +684,3 @@ window.addEventListener('load', iniciar);
 </script>
 </body>
 </html>
-
-  

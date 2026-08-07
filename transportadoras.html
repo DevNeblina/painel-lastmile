@@ -54,7 +54,7 @@
     .modal-bg.show { display: flex; }
     .modal { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 480px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
     .modal-wide { max-width: 1100px; max-height: 85vh; display: flex; flex-direction: column; }
-    .modal-mapa { max-width: 900px; max-height: 85vh; display: flex; flex-direction: column; }
+    .modal-mapa { max-width: 900px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; }
     .modal-drivers { max-width: 98vw; width: 98vw; max-height: 90vh; display: flex; flex-direction: column; }
     .modal-drivers .modal-scroll { overflow-x: hidden; overflow-y: auto; flex: 1; }
     .modal-colunas { max-width: 420px; max-height: 80vh; display: flex; flex-direction: column; }
@@ -89,11 +89,12 @@
     .col-toggle-item:last-child { border-bottom: none; }
     .col-toggle-item input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: #333; }
     .col-toggle-item label { cursor: pointer; flex: 1; color: #374151; font-weight: 500; }
-    #mapa-leaflet { height: 500px; width: 100%; border-radius: 8px;  margin-top: 10px; }
-    .mapa-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .mapa-wrap { flex: 1; min-height: 420px; position: relative; margin-top: 8px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+    #mapa-leaflet { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .mapa-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
     .mapa-stat { background: #f8f9fb; border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px 12px; font-size: 11px; color: #555; }
     .mapa-stat b { color: #333; }
-    .mapa-loading { text-align: center; padding: 40px; color: #64748b; font-size: 13px; }
+    .mapa-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #f8fafc; font-size: 13px; color: #64748b; border-radius: 8px; z-index: 10; text-align: center; padding: 20px; }
   </style>
 </head>
 
@@ -177,8 +178,10 @@
   <div class="modal modal-mapa">
     <h3 id="mapa-titulo">🗺️ Mapa da Rota</h3>
     <div class="mapa-stats" id="mapa-stats"></div>
-    <div id="mapa-loading" class="mapa-loading">⏳ Carregando paradas e geocodificando CEPs...</div>
-    <div id="mapa-leaflet"></div>
+    <div class="mapa-wrap">
+      <div id="mapa-loading" class="mapa-loading">⏳ Carregando paradas...</div>
+      <div id="mapa-leaflet"></div>
+    </div>
     <div class="modal-footer" style="margin-top:10px">
       <button class="btn btn-cancel" onclick="fecharModal('modalMapa')">Fechar</button>
     </div>
@@ -243,7 +246,7 @@ if (!usuario || !usuario.email) { window.location.href='index.html'; }
 
 var dadosBrutos=[],dadosFiltrados=[],transps=[],todosDrivers=[];
 var statusMap={},cicloAtual='',filtroModalAtivo='',sCampo='',sAsc=true;
-var mapaLeaflet=null, mapaAtivo=false;
+var mapaLeaflet=null, mapaRequisicaoAtiva=false;
 
 var COLUNAS=[
   {label:'Planejada',vis:true},{label:'Otimizada',vis:true},{label:'Pacotes',vis:true},
@@ -260,9 +263,21 @@ function recarregar(){ filtroModalAtivo=''; sCampo=''; carregarEscala(cicloAtual
 function loading(s){ var el=document.getElementById('loading'); s?el.classList.add('on'):el.classList.remove('on'); }
 function mostrarMsg(msg,ok){ var el=document.getElementById('msgGlobal'); el.textContent=msg; el.className='msg '+(ok?'ok':'err'); setTimeout(function(){ el.className='msg'; },4000); }
 function esc(v){ if(v===null||v===undefined)return''; return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 function fecharModal(id){
   document.getElementById(id).classList.remove('show');
-  if(id==='modalMapa' && mapaLeaflet){ mapaLeaflet.remove(); mapaLeaflet=null; mapaAtivo=false; }
+  if(id==='modalMapa'){
+    mapaRequisicaoAtiva=false;
+    if(mapaLeaflet){ mapaLeaflet.remove(); mapaLeaflet=null; }
+    // Reseta completamente o container do mapa
+    var wrap=document.getElementById('mapa-leaflet');
+    var novo=document.createElement('div');
+    novo.id='mapa-leaflet';
+    wrap.parentNode.replaceChild(novo,wrap);
+    document.getElementById('mapa-loading').style.display='flex';
+    document.getElementById('mapa-loading').textContent='⏳ Carregando paradas...';
+    document.getElementById('mapa-stats').innerHTML='';
+  }
 }
 
 function iniciar(){
@@ -473,19 +488,39 @@ function abrirDetalhe(idx){
 // ── MAPA ──
 function abrirMapa(idx){
   var d=dadosFiltrados[idx]; if(!d) return;
+
+  // Reset completo do estado
+  mapaRequisicaoAtiva=false;
+  if(mapaLeaflet){ mapaLeaflet.remove(); mapaLeaflet=null; }
+  var velho=document.getElementById('mapa-leaflet');
+  var novo=document.createElement('div');
+  novo.id='mapa-leaflet';
+  velho.parentNode.replaceChild(novo,velho);
+
+  // Reset UI
   document.getElementById('mapa-titulo').textContent='🗺️ Mapa — '+(d.otimizada||d.rota);
   document.getElementById('mapa-stats').innerHTML='';
-  document.getElementById('mapa-loading').style.display='block';
-  document.getElementById('mapa-leaflet').style.display='none';
+  var loadEl=document.getElementById('mapa-loading');
+  loadEl.style.display='flex';
+  loadEl.textContent='⏳ Buscando pacotes da rota...';
+
+  // Abre modal
   document.getElementById('modalMapa').classList.add('show');
-  if(mapaLeaflet){ mapaLeaflet.remove(); mapaLeaflet=null; }
+
+  // Marca requisição ativa
+  var reqId=Date.now();
+  mapaRequisicaoAtiva=reqId;
 
   api({action:'getDetalheRota', ciclo:cicloAtual, rota:d.rota}).then(function(res){
+    // Ignora se modal foi fechado ou nova rota foi aberta
+    if(mapaRequisicaoAtiva!==reqId) return;
+
     var pacs=res.data||[];
     if(!pacs.length){
-      document.getElementById('mapa-loading').textContent='Sem pacotes para exibir no mapa.';
+      loadEl.textContent='Sem pacotes para exibir no mapa.';
       return;
     }
+
     // Agrupa por CEP único mantendo menor parada
     var cepMap={};
     pacs.forEach(function(p){
@@ -498,17 +533,20 @@ function abrirMapa(idx){
     });
     var cepsUnicos=Object.values(cepMap).sort(function(a,b){ return a.parada-b.parada; });
 
-    document.getElementById('mapa-loading').textContent='⏳ Geocodificando '+cepsUnicos.length+' CEPs únicos...';
+    loadEl.textContent='⏳ Geocodificando '+cepsUnicos.length+' CEPs únicos... (pode levar alguns segundos)';
 
-    // Geocodifica em lotes sequenciais
-    geocodificarLote(cepsUnicos, 0, [], function(coords){
-      document.getElementById('mapa-loading').style.display='none';
-      document.getElementById('mapa-leaflet').style.display='block';
+    api({action:'geocodificarCeps', ceps:cepsUnicos}).then(function(geoRes){
+      // Ignora se modal foi fechado
+      if(mapaRequisicaoAtiva!==reqId) return;
 
+      var coords=geoRes.data||[];
       var validos=coords.filter(function(c){ return c.lat&&c.lng; });
+
+      loadEl.style.display='none';
+
       if(!validos.length){
-        document.getElementById('mapa-loading').style.display='block';
-        document.getElementById('mapa-loading').textContent='❌ Não foi possível geocodificar os CEPs.';
+        loadEl.style.display='flex';
+        loadEl.textContent='❌ Não foi possível geocodificar os CEPs.';
         return;
       }
 
@@ -518,36 +556,47 @@ function abrirMapa(idx){
         '<span class="mapa-stat"><b>'+validos.length+'</b> localizados</span>'+
         '<span class="mapa-stat">🚛 '+esc(d.transportadora||'Sem transp.')+'</span>';
 
-      mapaLeaflet=L.map('mapa-leaflet');
+      // Inicializa mapa
+      var mapaEl=document.getElementById('mapa-leaflet');
+      mapaLeaflet=L.map(mapaEl,{zoomControl:true});
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-        attribution:'© OpenStreetMap',maxZoom:18
+        attribution:'© OpenStreetMap', maxZoom:18
       }).addTo(mapaLeaflet);
 
       var bounds=[];
       validos.forEach(function(c){
         var icon=L.divIcon({
           className:'',
-          html:'<div style="background:#FFE600;color:#333;border:2px solid #333;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;box-shadow:0 2px 4px rgba(0,0,0,.3)">'+c.parada+'</div>',
-          iconSize:[26,26],iconAnchor:[13,13]
+          html:'<div style="background:#FFE600;color:#333;border:2px solid #333;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;box-shadow:0 2px 4px rgba(0,0,0,.3);line-height:1">'+c.parada+'</div>',
+          iconSize:[26,26], iconAnchor:[13,13], popupAnchor:[0,-13]
         });
         var marker=L.marker([c.lat,c.lng],{icon:icon}).addTo(mapaLeaflet);
-        marker.bindPopup('<div style="font-size:12px;line-height:1.6"><b>Parada '+c.parada+'</b><br>CEP: '+c.cep+'<br>'+c.bairro+(c.cidade?', '+c.cidade:'')+'</div>');
+        marker.bindPopup(
+          '<div style="font-size:12px;line-height:1.6">'
+          +'<b>Parada '+c.parada+'</b><br>'
+          +'CEP: '+c.cep+'<br>'
+          +c.bairro+(c.cidade?'<br>'+c.cidade:'')
+          +'</div>'
+        );
         bounds.push([c.lat,c.lng]);
       });
 
-      if(bounds.length) mapaLeaflet.fitBounds(bounds,{padding:[30,30]});
-    });
-  }).catch(function(e){
-    document.getElementById('mapa-loading').textContent='Erro: '+e.message;
-  });
-}
+      if(bounds.length){
+        mapaLeaflet.fitBounds(bounds,{padding:[30,30]});
+        // Força resize depois do fitBounds
+        setTimeout(function(){ if(mapaLeaflet) mapaLeaflet.invalidateSize(); },200);
+      }
 
-function geocodificarLote(ceps, idx, resultados, callback){
-  // Agora usa Apps Script como proxy
-  api({action:'geocodificarCeps', ceps:ceps}).then(function(res){
-    callback(res.data||[]);
-  }).catch(function(){
-    callback([]);
+    }).catch(function(e){
+      if(mapaRequisicaoAtiva!==reqId) return;
+      loadEl.style.display='flex';
+      loadEl.textContent='❌ Erro no geocoding: '+e.message;
+    });
+
+  }).catch(function(e){
+    if(mapaRequisicaoAtiva!==reqId) return;
+    loadEl.style.display='flex';
+    loadEl.textContent='❌ Erro ao buscar pacotes: '+e.message;
   });
 }
 

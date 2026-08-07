@@ -511,23 +511,27 @@ function abrirMapa(idx){
     if(!pacs.length){ loadEl.textContent='Sem pacotes para exibir no mapa.'; return; }
 
     // Agrupa por PARADA — 1 pin por parada com 1 CEP representativo
-    var paradaMap={};
-    pacs.forEach(function(p){
-      var cep=String(p.cep||'').replace(/\D/g,'');
-      var parada=parseInt(p.parada||999,10);
-      if(!paradaMap[parada]){
-        paradaMap[parada]={
-          cep:cep||'',
-          parada:parada,
-          bairro:p.bairro||'',
-          cidade:p.cidade||'',
-          total:1
-        };
-      } else {
-        paradaMap[parada].total++;
-        if(!paradaMap[parada].cep && cep) paradaMap[parada].cep=cep;
-      }
-    });
+var paradaMap={};
+pacs.forEach(function(p){
+  var cep    = String(p.cep||'').replace(/\D/g,'');
+  var parada = parseInt(p.parada||999,10);
+  if(!paradaMap[parada]){
+    paradaMap[parada]={
+      cep:    cep||'',
+      rua:    p.rua||'',
+      numero: p.numero_casa||'',
+      parada: parada,
+      bairro: p.bairro||'',
+      cidade: p.cidade||'',
+      total:  1
+    };
+  } else {
+    paradaMap[parada].total++;
+    if(!paradaMap[parada].cep && cep) paradaMap[parada].cep=cep;
+    if(!paradaMap[parada].rua && p.rua) paradaMap[parada].rua=p.rua||'';
+    if(!paradaMap[parada].numero && p.numero_casa) paradaMap[parada].numero=p.numero_casa||'';
+  }
+});
 
     var paradas=Object.values(paradaMap)
       .filter(function(p){ return !!p.cep; })
@@ -571,14 +575,14 @@ function abrirMapa(idx){
           iconSize:[28,28], iconAnchor:[14,14], popupAnchor:[0,-14]
         });
         var marker=L.marker([c.lat,c.lng],{icon:icon}).addTo(mapaLeaflet);
-        marker.bindPopup(
-          '<div style="font-size:12px;line-height:1.6">'
-          +'<b>Parada '+c.parada+'</b><br>'
-          +'CEP: '+c.cep+'<br>'
-          +c.bairro+(c.cidade?'<br>'+c.cidade:'')
-          +(c.total>1?'<br><b>'+c.total+' pacotes</b>':'')
-          +'</div>'
-        );
+marker.bindPopup(
+  '<div style="font-size:12px;line-height:1.6">'
+  +'<b>Parada '+c.parada+'</b><br>'
+  +(c.rua?(c.rua+(c.numero?', '+c.numero:'')+'<br>'):'')
+  +c.bairro+(c.cidade?'<br>'+c.cidade:'')
+  +(c.total>1?'<br><b>'+c.total+' pacotes</b>':'')
+  +'</div>'
+);
         bounds.push([c.lat,c.lng]);
       });
 

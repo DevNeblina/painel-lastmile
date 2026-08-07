@@ -591,54 +591,64 @@ function salvarMLP(){
 
 function baixarXlsx(){
   if(!filtrados.length){ toast('Sem rotas filtradas.','inf'); return; }
+  toast('⏳ Gerando XLSX, aguarde...','inf');
+  loading(true);
 
-  var wb = XLSX.utils.book_new();
+  api({action:'getTodosPacotes', ciclo:cicloAtual}).then(function(res){
+    loading(false);
+    var pacotesMap = res.data || {};
 
-  // ── Aba 1: Escala ──
-  var escalaRows=[['Otimizada','Rota','Paradas','Pacotes','Cidade','Bairro','Tipo Veículo','Ocup/Vol','Projeto','Transportadora','Giro','Área','Doca','Roteiro']];
-  filtrados.forEach(function(d){
-    escalaRows.push([
-      d.otimizada||'', d.rota||'', d.parada||'', d.pacotes||'',
-      d.cidade||'', d.bairro||'', d.tipo_veiculo||'', d.ocup_volumosos||'',
-      d.projeto||'', d.transportadora||'', d.giro||'', d.area||'',
-      d.doca||'', d.roteiro||''
-    ]);
-  });
-  var wsEscala = XLSX.utils.aoa_to_sheet(escalaRows);
-  wsEscala['!cols'] = [10,10,8,8,16,20,18,8,12,20,8,8,8,12].map(function(w){ return {wch:w}; });
-  XLSX.utils.book_append_sheet(wb, wsEscala, 'Escala');
+    var wb = XLSX.utils.book_new();
 
-  // ── Aba 2: Roadmaps (por transportadora) ──
-  var transpMap={};
-  filtrados.forEach(function(d){
-    var t=String(d.transportadora||'').trim()||'SEM TRANSPORTADORA';
-    if(!transpMap[t]) transpMap[t]=[];
-    transpMap[t].push(d);
-  });
-
-  Object.keys(transpMap).sort().forEach(function(transp){
-    var rows=[['Otimizada','Rota','Paradas','Pacotes','Cidade','Bairro','Tipo Veículo','Giro','Área','Doca','Roteiro']];
-    transpMap[transp].forEach(function(d){
-      rows.push([
+    // ── Aba 1: Escala ──
+    var escalaRows=[['Otimizada','Rota','Paradas','Pacotes','Cidade','Bairro','Tipo Veículo','Ocup/Vol','Projeto','Transportadora','Giro','Área','Doca','Roteiro']];
+    filtrados.forEach(function(d){
+      escalaRows.push([
         d.otimizada||'', d.rota||'', d.parada||'', d.pacotes||'',
-        d.cidade||'', d.bairro||'', d.tipo_veiculo||'',
-        d.giro||'', d.area||'', d.doca||'', d.roteiro||''
+        d.cidade||'', d.bairro||'', d.tipo_veiculo||'', d.ocup_volumosos||'',
+        d.projeto||'', d.transportadora||'', d.giro||'', d.area||'',
+        d.doca||'', d.roteiro||''
       ]);
     });
-    var ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [10,10,8,8,16,20,18,8,8,8,12].map(function(w){ return {wch:w}; });
-    // Nome da aba limitado a 31 chars (limite do Excel)
-    var nomeAba = transp.substring(0,31).replace(/[:\\\/\?\*\[\]]/g,'');
-    XLSX.utils.book_append_sheet(wb, ws, nomeAba);
-  });
+    var wsEscala = XLSX.utils.aoa_to_sheet(escalaRows);
+    wsEscala['!cols'] = [12,12,8,8,16,20,20,8,12,22,8,8,8,12].map(function(w){ return {wch:w}; });
+    XLSX.utils.book_append_sheet(wb, wsEscala, 'Escala');
 
-  // ── Download ──
-  try {
-    XLSX.writeFile(wb, 'escala_'+cicloAtual+'.xlsx');
-    toast('✅ XLSX baixado com '+(Object.keys(transpMap).length+1)+' abas!','ok');
-  } catch(er) {
-    toast('⚠️ Popup bloqueado. Tente liberar popups para este site.','err');
-    // Fallback: tenta via blob
+    // ── Aba 2: Roadmaps ──
+    // Mapa de rota → otimizada
+    var rotaParaOtimizada = {};
+    filtrados.forEach(function(d){
+      if(d.rota) rotaParaOtimizada[d.rota] = d.otimizada||d.rota;
+    });
+
+    var roadRows=[['Rota Otimizada','Rota Planejada','Parada','Shipment ID','Cidade','Bairro','CEP','Merchant Type','Promessa Início','Promessa Fim']];
+
+    // Percorre filtrados na ordem da escala
+    filtrados.forEach(function(d){
+      var pacotes = pacotesMap[d.rota] || [];
+      // Ordena por parada
+      pacotes.sort(function(a,b){ return parseInt(a.parada||0,10)-parseInt(b.parada||0,10); });
+      pacotes.forEach(function(p){
+        roadRows.push([
+          rotaParaOtimizada[d.rota]||d.rota,
+          p.rota||'',
+          p.parada||'',
+          p.shipment_id||'',
+          p.cidade||'',
+          p.bairro||'',
+          p.cep||'',
+          p.merchant_type||'',
+          p.promessa_inicio||'',
+          p.promessa_fim||''
+        ]);
+      });
+    });
+
+    var wsRoad = XLSX.utils.aoa_to_sheet(roadRows);
+    wsRoad['!cols'] = [14,14,8,14,16,20,10,14,18,18].map(function(w){ return {wch:w}; });
+    XLSX.utils.book_append_sheet(wb, wsRoad, 'Roadmaps');
+
+    // ── Download ──
     try {
       var wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
       var blob = new Blob([wbout], {type:'application/octet-stream'});
@@ -649,11 +659,15 @@ function baixarXlsx(){
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(a.href);
-      toast('✅ XLSX baixado!','ok');
-    } catch(e2){
-      toast('❌ Erro ao baixar: '+e2.message,'err');
+      toast('✅ XLSX baixado! Escala + Roadmaps','ok');
+    } catch(er){
+      toast('❌ Erro ao gerar XLSX: '+er.message,'err');
     }
-  }
+
+  }).catch(function(er){
+    loading(false);
+    toast('❌ Erro ao buscar pacotes: '+er.message,'err');
+  });
 }
 
 function baixarCSV(){

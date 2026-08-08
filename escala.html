@@ -673,13 +673,21 @@ function baixarXlsx(){
 function baixarCSV(){
   if(!filtrados.length){ toast('Sem rotas filtradas.','inf'); return; }
   var rows=[['Rota otimizada','Rota original','Cluster','Tipo de veículo','SPR','Transportadora']];
-  filtrados.forEach(function(d){ rows.push([d.otimizada||'',d.rota||'',d.area||'',d.tipo_veiculo||'',d.doca||'',d.transportadora||'']); });
+  filtrados.forEach(function(d){
+    rows.push([
+      d.otimizada||'',
+      d.rota||'',
+      d.roteiro||'',
+      d.tipo_veiculo||'',
+      d.pacotes||'',
+      d.transportadora||''
+    ]);
+  });
   var csv=rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
   var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='transportadoras_'+cicloAtual+'.csv'; a.click();
   toast('⬇️ Download iniciado!','ok');
 }
-
 window.addEventListener('load', iniciar);
 </script>
 </body>
